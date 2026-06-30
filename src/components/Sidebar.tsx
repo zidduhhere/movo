@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useStore } from '../store';
 import clsx from 'clsx';
-import { Library, Clock, Calendar, CalendarDays, CheckSquare, Target, Trash2, LogOut, Plus } from 'lucide-react';
+import { Library, Clock, Calendar, CalendarDays, CheckSquare, Target, Trash2, LogOut, Plus, MessageSquare } from 'lucide-react';
 import { confirm } from '@tauri-apps/plugin-dialog';
 
 export function Sidebar() {
@@ -19,6 +19,20 @@ export function Sidebar() {
             
             <div className="flex-1 overflow-y-auto px-3 flex flex-col gap-6 pt-4">
                 
+                {/* Chat with Movo */}
+                <button
+                    onClick={() => setActiveView('new_project')}
+                    className={clsx(
+                        'flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-[13px] font-semibold transition-colors',
+                        activeView === 'new_project'
+                            ? 'bg-[#85D24E] text-black shadow-sm'
+                            : 'bg-white/10 text-white hover:bg-white/20'
+                    )}
+                >
+                    <MessageSquare className="w-4 h-4 shrink-0" />
+                    Chat with Movo
+                </button>
+
                 {/* Library Section */}
                 <div className="flex flex-col gap-0.5">
                     <div className="px-2 mb-1 flex items-center">

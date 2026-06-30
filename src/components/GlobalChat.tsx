@@ -31,18 +31,25 @@ export function GlobalChat() {
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-    const { globalMessages, sendGlobalMessage, isLoading, isSidebarOpen, fetchGoals } = useStore();
+    const { globalMessages, sendGlobalMessage, isLoading, isSidebarOpen, fetchGoals,
+            pendingTrayCapture, setPendingTrayCapture } = useStore();
 
     const { isListening, toggleListening } = useVoiceInput({
         onTranscript: (text) => setInput(text),
     });
 
     useEffect(() => {
-        const unlisten = listen('goal_created', () => {
-            fetchGoals();
-        });
+        const unlisten = listen('goal_created', () => { fetchGoals(); });
         return () => { unlisten.then((fn) => fn()); };
     }, [fetchGoals]);
+
+    // Auto-send text that arrived from the tray popup
+    useEffect(() => {
+        if (pendingTrayCapture) {
+            setPendingTrayCapture(null);
+            handleSend(pendingTrayCapture);
+        }
+    }, [pendingTrayCapture, setPendingTrayCapture]);
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

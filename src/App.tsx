@@ -31,6 +31,7 @@ function App() {
   } = useStore();
 
   const [showCommandPalette, setShowCommandPalette] = useState(false);
+  const [showListChat, setShowListChat] = useState(false);
 
   useEffect(() => {
     setLiquidGlassEffect({ variant: GlassMaterialVariant.Clear }).catch(console.error);
@@ -207,40 +208,43 @@ function App() {
             </motion.div>
           </AnimatePresence>
         ) : (
-          <>
-            <div className={clsx("absolute top-0 left-0 right-0 h-[64px] flex items-center justify-between px-6 bg-transparent z-10 pointer-events-none", !isSidebarOpen && "pl-24")}>
-              <div className="flex items-center gap-2 pointer-events-auto">
-                <button onClick={toggleSidebar} className="p-2 rounded-full bg-white border border-[#E5E5E5] shadow-sm hover:bg-black/5 transition-colors text-[#2D2D2D] focus:outline-none flex items-center justify-center h-10 w-10">
-                  <PanelLeft className="w-4 h-4" />
-                </button>
-              </div>
-              <div className="flex items-center gap-2 pointer-events-auto">
-                <button
-                  onClick={() => setActiveView('new_project')}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-[#85D24E] hover:bg-[#7bc248] text-black text-[13px] font-semibold shadow-sm transition-colors focus:outline-none"
-                >
-                  <Plus className="w-4 h-4" />
-                  New Goal
-                </button>
-                <SettingsDropdown />
-              </div>
-            </div>
-
-            <AnimatePresence mode="wait">
-              <motion.div
-                key="today"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="flex-1 overflow-y-auto p-8 pt-20 flex flex-col items-center relative z-0"
-              >
-                <div className="w-full max-w-3xl mb-8">
-                  <h1 className="text-[28px] font-semibold tracking-tight text-[#1C1C1E]">
+          <div className="flex flex-1 h-full overflow-hidden">
+            {/* Main list area */}
+            <div className="flex flex-col flex-1 h-full overflow-hidden">
+              <div className={clsx("shrink-0 h-[64px] flex items-center justify-between px-6 border-b border-black/8 bg-white/60 backdrop-blur-sm", !isSidebarOpen && "pl-24")}>
+                <div className="flex items-center gap-3">
+                  <button onClick={toggleSidebar} className="p-2 rounded-full bg-white border border-[#E5E5E5] shadow-sm hover:bg-black/5 transition-colors text-[#2D2D2D] focus:outline-none flex items-center justify-center h-9 w-9">
+                    <PanelLeft className="w-4 h-4" />
+                  </button>
+                  <h1 className="text-[20px] font-semibold tracking-tight text-[#1C1C1E]">
                     {activeView === 'completed' ? 'Completed' :
                      activeView === 'recent' ? 'Recent' :
-                     activeView === 'upcoming' ? 'Upcoming' : 'Today'}
+                     activeView === 'upcoming' ? 'Upcoming' : 'All Tasks'}
                   </h1>
                 </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setShowListChat(v => !v)}
+                    className={clsx(
+                      'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-semibold border transition-colors',
+                      showListChat ? 'bg-[#1C1C1E] text-white border-transparent' : 'bg-white border-black/10 text-black/70 hover:bg-black/5'
+                    )}
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    Ask AI
+                  </button>
+                  <button
+                    onClick={() => setActiveView('new_project')}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-[#85D24E] hover:bg-[#7bc248] text-black text-[13px] font-semibold shadow-sm transition-colors"
+                  >
+                    <Plus className="w-4 h-4" />
+                    New Goal
+                  </button>
+                  <SettingsDropdown />
+                </div>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-8 flex flex-col items-center">
                 {activeView === 'all' && (
                   <div className="w-full max-w-3xl mb-8">
                     <NextActionWidget />
@@ -249,9 +253,25 @@ function App() {
                 <div className="w-full max-w-3xl pb-24">
                   <TaskList />
                 </div>
-              </motion.div>
+              </div>
+            </div>
+
+            {/* AI chat side panel */}
+            <AnimatePresence>
+              {showListChat && (
+                <motion.div
+                  key="list-chat"
+                  initial={{ x: 360, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  exit={{ x: 360, opacity: 0 }}
+                  transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                  className="w-[360px] h-full border-l border-black/8 flex flex-col overflow-hidden"
+                >
+                  <GlobalChat />
+                </motion.div>
+              )}
             </AnimatePresence>
-          </>
+          </div>
         )}
       </div>
     </div>

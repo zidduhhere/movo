@@ -71,7 +71,8 @@ pub async fn global_chat(
          RULES:\n\
          • Respond naturally to greetings and casual messages — do NOT create a project unless the user clearly describes a goal.\n\
          • Only call create_project when the user's intent is a clear, trackable goal.\n\
-         • After create_project, immediately call create_task for each concrete next step, using the returned goal_id.\n\
+         • After create_project, call create_task for the 3–6 most important, actionable steps only. Skip trivial or implied sub-steps.\n\
+           Use the placeholder string \"LAST_CREATED_GOAL\" as goal_id — the backend will resolve it to the real ID.\n\
          • Check OCCUPIED SLOTS before proposing dates. Warn on conflicts.\n\
          • Ask ONE clarifying question at a time when intent is unclear.\n\
          • Use context-appropriate terminology — never default to 'project'. Examples:\n\
@@ -98,6 +99,9 @@ pub async fn global_chat(
     let (ai_text, tool_calls) = ai.chat_with_tools(&system_prompt, messages, global_chat_tools()).await?;
 
     let mut created_goal_ids: Vec<String> = Vec::new();
+    // Tracks the most recently created real goal ID so create_task calls that use
+    // the "LAST_CREATED_GOAL" placeholder (or any unresolvable ID) still land correctly.
+    let mut last_real_goal_id: Option<String> = None;
 
     {
         let conn = conn.lock().map_err(|e| e.to_string())?;
@@ -112,11 +116,31 @@ pub async fn global_chat(
                     let goal = repo.create_goal(&user_id, title, description, target_date)
                         .map_err(|e| e.to_string())?;
                     let _ = app_handle.emit("goal_created", &goal);
+                    last_real_goal_id = Some(goal.id.clone());
                     created_goal_ids.push(goal.id);
                 }
                 "create_task" => {
-                    let goal_id = call.arguments["goal_id"].as_str().unwrap_or("").to_string();
-                    if goal_id.is_empty() { continue; }
+                    let raw_goal_id = call.arguments["goal_id"].as_str().unwrap_or("").to_string();
+                    // Resolve placeholder or unknown IDs to the last created real goal.
+                    let goal_id = if raw_goal_id == "LAST_CREATED_GOAL" || raw_goal_id.is_empty() {
+                        match &last_real_goal_id {
+                            Some(id) => id.clone(),
+                            None => continue, // no goal to attach to yet
+                        }
+                    } else {
+                        // Verify the goal actually exists; fall back if it doesn't.
+                        let exists: bool = conn.query_row(
+                            "SELECT COUNT(*) FROM goals WHERE id = ?1",
+                            rusqlite::params![&raw_goal_id],
+                            |r| r.get::<_, i64>(0),
+                        ).unwrap_or(0) > 0;
+                        if exists { raw_goal_id } else {
+                            match &last_real_goal_id {
+                                Some(id) => id.clone(),
+                                None => continue,
+                            }
+                        }
+                    };
                     let title = call.arguments["title"].as_str().unwrap_or("New Task").to_string();
                     let description = call.arguments["description"].as_str().map(|s| s.to_string());
                     let effort_minutes = call.arguments["effort_minutes"].as_i64().unwrap_or(30) as i32;

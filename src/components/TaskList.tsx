@@ -19,23 +19,26 @@ export function TaskList() {
     if (activeView === 'project' && !activeGoalId) return null;
 
     const now = new Date();
-    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
 
     const displayTasks = (() => {
         switch (activeView) {
             case 'recent':
                 return tasks
-                    .filter(t => t.status !== 'completed' && new Date(t.created_at) >= sevenDaysAgo)
+                    .filter(t => t.status !== 'completed' && new Date(t.created_at) >= fourteenDaysAgo)
                     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
             case 'upcoming':
                 return tasks
-                    .filter(t => t.status !== 'completed' && t.deadline && new Date(t.deadline) <= sevenDaysFromNow)
+                    .filter(t => t.status !== 'completed' && t.deadline && new Date(t.deadline) >= now)
                     .sort((a, b) => new Date(a.deadline!).getTime() - new Date(b.deadline!).getTime());
             case 'completed':
-                return tasks.filter(t => t.status === 'completed');
+                return tasks
+                    .filter(t => t.status === 'completed')
+                    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
             default:
-                return tasks.filter(t => t.status !== 'completed');
+                return tasks
+                    .filter(t => t.status !== 'completed')
+                    .sort((a, b) => (a.priority ?? 3) - (b.priority ?? 3));
         }
     })();
 
