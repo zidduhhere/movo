@@ -1,0 +1,11 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "voice-popup",
+  "description": "Capability for the voice popup window",
+  "windows": ["voice_popup"],
+  "permissions": [
+    "core:default",
+    "core:window:allow-hide",
+    "core:window:allow-set-focus"
+  ]
+}
