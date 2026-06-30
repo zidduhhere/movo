@@ -4,7 +4,7 @@ use rusqlite::Connection;
 use chrono::Utc;
 use crate::models::{ChatMessage, ChatRole, Task, TaskStatus};
 use crate::db::repository::Repository;
-use crate::ai::openai::{OpenAiProvider, chat_tools};
+use crate::ai::openai::{OpenAiProvider, global_chat_tools};
 use crate::AppState;
 use uuid::Uuid;
 
@@ -140,7 +140,7 @@ pub async fn chat_with_ai(
     );
 
     let (ai_text, tool_calls) = ai
-        .chat_with_tools(&system_prompt, messages, chat_tools())
+        .chat_with_tools(&system_prompt, messages, global_chat_tools())
         .await?;
 
     // Execute tool calls and detect conflicts
