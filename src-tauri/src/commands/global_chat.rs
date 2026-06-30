@@ -74,6 +74,13 @@ pub async fn global_chat(
          • After create_project, immediately call create_task for each concrete next step, using the returned goal_id.\n\
          • Check OCCUPIED SLOTS before proposing dates. Warn on conflicts.\n\
          • Ask ONE clarifying question at a time when intent is unclear.\n\
+         • Use context-appropriate terminology — never default to 'project'. Examples:\n\
+           - A trip, getaway, or outing → 'trip' or 'travel plan'\n\
+           - A one-off appointment or occasion → 'event'\n\
+           - A piece of work or assignment → 'job' or 'task'\n\
+           - A learning goal or course → 'learning goal'\n\
+           - A product launch or build → 'project'\n\
+           Match the word the user used when they used one.\n\
          • When you need to ask a question or offer choices, use this exact JSON format:\n\
          \n\
 ```json\n\
