@@ -39,6 +39,7 @@ pub async fn global_chat(
         .clone().ok_or("Not logged in")?;
 
     // Ensure sentinel goal exists, save user message, fetch history and context
+    let now = Utc::now();
     let (global_goal_id, messages, prefs, events) = {
         let conn = conn.lock().map_err(|e| e.to_string())?;
         let repo = Repository::new(&conn);
@@ -46,7 +47,6 @@ pub async fn global_chat(
         repo.add_message(&goal_id, ChatRole::User, &content).map_err(|e| e.to_string())?;
         let messages = repo.get_messages_for_goal(&goal_id).map_err(|e| e.to_string())?;
         let prefs = repo.get_user_preferences(&user_id).map_err(|e| e.to_string())?.unwrap_or_default();
-        let now = Utc::now();
         let four_weeks = now + Duration::weeks(4);
         let events = repo.get_events_in_range(&user_id, &now.to_rfc3339(), &four_weeks.to_rfc3339()).unwrap_or_default();
         (goal_id, messages, prefs, events)
@@ -57,7 +57,7 @@ pub async fn global_chat(
     } else {
         events.iter().map(|e| {
             let label = e.goal_title.as_deref().map(|g| format!(" [{}]", g)).unwrap_or_default();
-            format!("  • {} – {}: {}{}", &e.start_time[..10], &e.end_time[..10], e.title, label)
+            format!("  • {} – {}: {}{}", e.start_time.get(..10).unwrap_or(&e.start_time), e.end_time.get(..10).unwrap_or(&e.end_time), e.title, label)
         }).collect::<Vec<_>>().join("\n")
     };
 
@@ -80,7 +80,7 @@ pub async fn global_chat(
 {{\"type\":\"interactive_question\",\"question\":\"Your question?\",\"options\":[\"Option A\",\"Option B\"]}}\n\
 ```\n\
          • Present tables with Markdown.",
-        today = Utc::now().format("%A, %B %d, %Y"),
+        today = now.format("%A, %B %d, %Y"),
         work_start = prefs.work_start,
         work_end = prefs.work_end,
         days_off = prefs.days_off,
@@ -109,6 +109,7 @@ pub async fn global_chat(
                 }
                 "create_task" => {
                     let goal_id = call.arguments["goal_id"].as_str().unwrap_or("").to_string();
+                    if goal_id.is_empty() { continue; }
                     let title = call.arguments["title"].as_str().unwrap_or("New Task").to_string();
                     let description = call.arguments["description"].as_str().map(|s| s.to_string());
                     let effort_minutes = call.arguments["effort_minutes"].as_i64().unwrap_or(30) as i32;
@@ -125,11 +126,15 @@ pub async fn global_chat(
                         created_at: Utc::now().to_rfc3339(),
                         deadline,
                     };
-                    let _ = repo.add_task(&task);
+                    if let Err(e) = repo.add_task(&task) {
+                        eprintln!("global_chat: failed to create task: {}", e);
+                    }
                 }
                 "delete_task" => {
                     if let Some(task_id) = call.arguments["task_id"].as_str() {
-                        let _ = repo.delete_task(task_id);
+                        if let Err(e) = repo.delete_task(task_id) {
+                            eprintln!("global_chat: failed to delete task {}: {}", task_id, e);
+                        }
                     }
                 }
                 "add_to_calendar" => {
@@ -147,10 +152,12 @@ pub async fn global_chat(
         }
     }
 
-    let response_text = if ai_text.is_empty() && !tool_calls.is_empty() {
+    let response_text = if !ai_text.is_empty() {
+        ai_text
+    } else if !tool_calls.is_empty() {
         "Done! I've set that up for you.".to_string()
     } else {
-        ai_text
+        "I'm not sure how to help with that.".to_string()
     };
 
     let ai_message = {
