@@ -7,8 +7,8 @@ import { SettingsDropdown } from './components/SettingsDropdown';
 import { Sidebar } from './components/Sidebar';
 import { NextActionWidget } from './components/NextActionWidget';
 import { Auth } from './components/Auth';
-import { EmptyState } from './components/EmptyState';
-import { GoalChatView } from './components/GoalChatView';
+import { GlobalChat } from './components/GlobalChat';
+import { GoalDetailView } from './components/GoalDetailView';
 import { FocusSession } from './components/FocusSession';
 import { CommandPalette } from './components/CommandPalette';
 import { Onboarding } from './components/Onboarding';
@@ -199,23 +199,11 @@ function App() {
             </div>
           </>
         ) : activeView === 'new_project' || goals.length === 0 ? (
-          <>
-            <div className="absolute top-0 left-0 right-0 h-[64px] flex items-center justify-between px-6 bg-transparent z-10 pointer-events-none">
-              <div className="flex items-center gap-2 pointer-events-auto no-drag">
-                <button onClick={toggleSidebar} className="p-2 rounded-full bg-white border border-[#E5E5E5] shadow-sm hover:bg-black/5 transition-colors text-[#2D2D2D] focus:outline-none flex items-center justify-center h-10 w-10">
-                  <PanelLeft className="w-4 h-4" />
-                </button>
-              </div>
-              <div className="flex items-center gap-2 pointer-events-auto no-drag">
-                <SettingsDropdown />
-              </div>
-            </div>
-            <EmptyState />
-          </>
+          <GlobalChat />
         ) : activeView === 'project' ? (
           <AnimatePresence mode="wait">
-            <motion.div key="project" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="w-full h-full">
-              <GoalChatView />
+            <motion.div key="project" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="w-full h-full flex">
+              <GoalDetailView />
             </motion.div>
           </AnimatePresence>
         ) : (
