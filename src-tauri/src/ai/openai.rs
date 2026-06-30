@@ -246,29 +246,44 @@ impl AiProvider for OpenAiProvider {
     }
 }
 
-/// Tool definitions for in-app chat (Responses API format — no `function` wrapper).
-pub fn chat_tools() -> Value {
+/// Tool definitions for the global (project-creation) chat.
+pub fn global_chat_tools() -> Value {
     json!([
         {
             "type": "function",
-            "name": "create_task",
-            "description": "Create a new task for the current goal",
+            "name": "create_project",
+            "description": "Create a new goal/project when the user has clearly stated a trackable objective. Do NOT call this for casual greetings, vague ideas, or when clarification is still needed.",
             "parameters": {
                 "type": "object",
                 "properties": {
                     "title": { "type": "string" },
                     "description": { "type": ["string", "null"] },
+                    "target_date": { "type": ["string", "null"], "description": "YYYY-MM-DD" }
+                },
+                "required": ["title"]
+            }
+        },
+        {
+            "type": "function",
+            "name": "create_task",
+            "description": "Create a task under an existing goal. Only call after create_project has been called and you have a goal_id.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "goal_id": { "type": "string" },
+                    "title": { "type": "string" },
+                    "description": { "type": ["string", "null"] },
                     "effort_minutes": { "type": "integer" },
                     "priority": { "type": "integer", "minimum": 1, "maximum": 5 },
-                    "deadline": { "type": ["string", "null"], "description": "ISO 8601 date string, e.g. 2026-07-15" }
+                    "deadline": { "type": ["string", "null"], "description": "ISO 8601 e.g. 2026-07-15" }
                 },
-                "required": ["title", "effort_minutes", "priority"]
+                "required": ["goal_id", "title", "effort_minutes", "priority"]
             }
         },
         {
             "type": "function",
             "name": "delete_task",
-            "description": "Delete an existing task by its ID",
+            "description": "Delete an existing task by its ID.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -280,15 +295,63 @@ pub fn chat_tools() -> Value {
         {
             "type": "function",
             "name": "add_to_calendar",
-            "description": "Add an event or time block to the user's calendar. Use this when the user wants to schedule something or when you are assigning a specific time slot to a task.",
+            "description": "Add a time block or event to the user's calendar. Check OCCUPIED SLOTS in the system prompt before scheduling.",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "title": { "type": "string", "description": "Event title" },
-                    "start_time": { "type": "string", "description": "ISO 8601 datetime e.g. 2026-07-15T09:00:00Z" },
-                    "end_time":   { "type": "string", "description": "ISO 8601 datetime e.g. 2026-07-15T10:00:00Z" }
+                    "title": { "type": "string" },
+                    "start_time": { "type": "string", "description": "ISO 8601 e.g. 2026-07-15T09:00:00Z" },
+                    "end_time":   { "type": "string", "description": "ISO 8601 e.g. 2026-07-15T10:00:00Z" }
                 },
                 "required": ["title", "start_time", "end_time"]
+            }
+        }
+    ])
+}
+
+/// Tool definitions for the per-task chat.
+pub fn task_chat_tools() -> Value {
+    json!([
+        {
+            "type": "function",
+            "name": "reschedule_task",
+            "description": "Move this task's calendar slot to a new time. Check OCCUPIED SLOTS before proposing a new time.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "new_start": { "type": "string", "description": "ISO 8601 e.g. 2026-07-07T10:00:00Z" },
+                    "new_end":   { "type": "string", "description": "ISO 8601 e.g. 2026-07-07T11:00:00Z" }
+                },
+                "required": ["new_start", "new_end"]
+            }
+        },
+        {
+            "type": "function",
+            "name": "complete_task",
+            "description": "Mark this task as completed.",
+            "parameters": { "type": "object", "properties": {} }
+        },
+        {
+            "type": "function",
+            "name": "split_task",
+            "description": "Break this task into smaller subtasks. The original task will be marked completed and replaced with the subtasks.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "subtasks": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "title": { "type": "string" },
+                                "effort_minutes": { "type": "integer" },
+                                "priority": { "type": "integer", "minimum": 1, "maximum": 5 }
+                            },
+                            "required": ["title", "effort_minutes", "priority"]
+                        }
+                    }
+                },
+                "required": ["subtasks"]
             }
         }
     ])
