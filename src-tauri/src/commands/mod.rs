@@ -4,6 +4,7 @@ pub mod planner;
 pub mod schedule;
 pub mod auth;
 pub mod chat;
+pub mod global_chat;
 pub mod preferences;
 pub mod calendar;
 pub mod voice;
