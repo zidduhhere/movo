@@ -55,7 +55,7 @@ export function Auth() {
                                     <label className="block text-[13px] font-semibold text-[#2D2D2D] mb-2">
                                         Full Name <span className="text-red-500">*</span>
                                     </label>
-                                    <div className="relative flex items-center bg-white border border-[#E5E5E5] rounded-[8px] focus-within:border-[#85D24E] transition-colors">
+                                    <div className="relative flex items-center bg-white border border-[#E5E5E5] rounded-[8px] focus-within:border-[#4D5AE8] transition-colors">
                                         <div className="pl-3 pr-2 text-[#8E8E93]">
                                             <User className="w-5 h-5" strokeWidth={1.5} />
                                         </div>
@@ -77,7 +77,7 @@ export function Auth() {
                             <label className="block text-[13px] font-semibold text-[#2D2D2D] mb-2">
                                 Email <span className="text-red-500">*</span>
                             </label>
-                            <div className="relative flex items-center bg-white border border-[#E5E5E5] rounded-[8px] focus-within:border-[#85D24E] transition-colors">
+                            <div className="relative flex items-center bg-white border border-[#E5E5E5] rounded-[8px] focus-within:border-[#4D5AE8] transition-colors">
                                 <div className="pl-3 pr-2 text-[#8E8E93]">
                                     <Mail className="w-5 h-5" strokeWidth={1.5} />
                                 </div>
@@ -97,7 +97,7 @@ export function Auth() {
                             <label className="block text-[13px] font-semibold text-[#2D2D2D] mb-2">
                                 Password <span className="text-red-500">*</span>
                             </label>
-                            <div className="relative flex items-center bg-white border border-[#E5E5E5] rounded-[8px] focus-within:border-[#85D24E] transition-colors">
+                            <div className="relative flex items-center bg-white border border-[#E5E5E5] rounded-[8px] focus-within:border-[#4D5AE8] transition-colors">
                                 <div className="pl-3 pr-2 text-[#8E8E93]">
                                     <Lock className="w-5 h-5" strokeWidth={1.5} />
                                 </div>
@@ -122,13 +122,6 @@ export function Auth() {
                                 </div>
                             </div>
                             
-                            {isLogin && (
-                                <div className="mt-2 text-right">
-                                    <a href="#" className="text-[12px] font-medium text-[#85D24E] hover:underline underline-offset-2">
-                                        Forgot Password
-                                    </a>
-                                </div>
-                            )}
                         </div>
 
                         {error && (
@@ -144,7 +137,7 @@ export function Auth() {
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="mt-6 w-full flex items-center justify-center gap-2 bg-[#85D24E] hover:bg-[#78C245] text-[#1C1C1E] py-3.5 rounded-[12px] text-[15px] font-medium transition-all active:scale-[0.98] disabled:opacity-70"
+                            className="mt-6 w-full flex items-center justify-center gap-2 bg-[#4D5AE8] hover:bg-[#4048C9] text-white py-3.5 rounded-[12px] text-[15px] font-medium transition-all active:scale-[0.98] disabled:opacity-70"
                         >
                             {isLoading ? (
                                 <Loader2 className="w-4 h-4 animate-spin" />

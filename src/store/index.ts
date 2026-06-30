@@ -56,7 +56,13 @@ export interface CalendarEvent {
     goal_title?: string;
 }
 
-type ActiveView = 'all' | 'recent' | 'upcoming' | 'completed' | 'project' | 'new_project' | 'calendar';
+export interface ScheduleResult {
+    scheduled_count: number;
+    infeasible: boolean;
+    suggested_deadline: string | null;
+}
+
+type ActiveView = 'all' | 'recent' | 'upcoming' | 'completed' | 'project' | 'new_project' | 'calendar' | 'chat';
 
 export interface ConflictInfo {
     task_title: string;
@@ -159,6 +165,8 @@ interface AppState {
     sendGlobalMessage: (content: string) => Promise<void>;
     sendTaskMessage: (taskId: string, content: string) => Promise<void>;
     setActiveChatTaskId: (id: string | null) => void;
+    scheduleResults: Record<string, ScheduleResult>;
+    dismissScheduleResult: (goalId: string) => void;
 }
 
 export const useStore = create<AppState>((set, _get) => ({
@@ -186,6 +194,7 @@ export const useStore = create<AppState>((set, _get) => ({
     globalMessages: [],
     taskMessages: {},
     activeChatTaskId: null,
+    scheduleResults: {},
 
     login: async (email, password) => {
         set({ isLoading: true, error: null });
@@ -467,7 +476,17 @@ export const useStore = create<AppState>((set, _get) => ({
                 isLoading: false,
             }));
             if (response.created_goal_ids.length > 0) {
-                useStore.getState().fetchGoals();
+                await useStore.getState().fetchGoals();
+                for (const goalId of response.created_goal_ids) {
+                    try {
+                        const result = await invoke<ScheduleResult>('schedule_goal', { goalId });
+                        set(state => ({
+                            scheduleResults: { ...state.scheduleResults, [goalId]: result }
+                        }));
+                    } catch (e) {
+                        console.error('Failed to schedule goal', e);
+                    }
+                }
             }
         } catch (error: any) {
             set(state => ({
@@ -477,6 +496,12 @@ export const useStore = create<AppState>((set, _get) => ({
             }));
         }
     },
+
+    dismissScheduleResult: (goalId) => set(state => {
+        const next = { ...state.scheduleResults };
+        delete next[goalId];
+        return { scheduleResults: next };
+    }),
 
     sendTaskMessage: async (taskId, content) => {
         const currentHistory = useStore.getState().taskMessages[taskId] ?? [];

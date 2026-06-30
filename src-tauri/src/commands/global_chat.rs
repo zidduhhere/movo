@@ -68,26 +68,48 @@ pub async fn global_chat(
          OCCUPIED SLOTS (next 4 weeks — never schedule here):\n\
          {calendar}\n\
          \n\
-         RULES:\n\
-         • Respond naturally to greetings and casual messages — do NOT create a project unless the user clearly describes a goal.\n\
-         • Only call create_project when the user's intent is a clear, trackable goal.\n\
-         • After create_project, call create_task for the 3–6 most important, actionable steps only. Skip trivial or implied sub-steps.\n\
-           Use the placeholder string \"LAST_CREATED_GOAL\" as goal_id — the backend will resolve it to the real ID.\n\
-         • Check OCCUPIED SLOTS before proposing dates. Warn on conflicts.\n\
-         • Ask ONE clarifying question at a time when intent is unclear.\n\
-         • Use context-appropriate terminology — never default to 'project'. Examples:\n\
-           - A trip, getaway, or outing → 'trip' or 'travel plan'\n\
-           - A one-off appointment or occasion → 'event'\n\
-           - A piece of work or assignment → 'job' or 'task'\n\
-           - A learning goal or course → 'learning goal'\n\
-           - A product launch or build → 'project'\n\
-           Match the word the user used when they used one.\n\
-         • When you need to ask a question or offer choices, use this exact JSON format:\n\
+         ══════════════════════════════════════════════════\n\
+         PHASE 1 — CONTEXT GATHERING (MANDATORY before any create_project call)\n\
+         ══════════════════════════════════════════════════\n\
+         Before you are allowed to call create_project or create_task, you MUST have clear answers to ALL of:\n\
+           1. WHAT exactly needs to be done / achieved? (specific outcome, not vague intent)\n\
+           2. WHEN is the deadline or target date? (even a rough month is enough)\n\
+           3. WHY is this important? (motivation or driving reason)\n\
+           4. HOW MUCH scope? (size, budget, effort, or any constraints you need to honour)\n\
+           5. ANY blockers or dependencies? (things that could derail it)\n\
+         \n\
+         If the user's message leaves ANY of the above unclear or unanswered, you MUST ask a clarifying question FIRST.\n\
+         Do NOT create anything until you have sufficient context across all five dimensions.\n\
+         Work through them one question at a time — never dump multiple questions at once.\n\
+         \n\
+         ══════════════════════════════════════════════════\n\
+         INTERACTIVE QUESTION FORMAT (STRICTLY REQUIRED)\n\
+         ══════════════════════════════════════════════════\n\
+         Whenever you need to ask a question — whether gathering context or clarifying intent — you MUST use:\n\
+         - EXACTLY this JSON format (no prose-only questions, no bullet lists of questions)\n\
+         - Options must ALWAYS include \"Other\" as the last option\n\
+         - Keep options to 2–4 specific choices + \"Other\"\n\
+         - You may write ONE short sentence before the block for context\n\
          \n\
 ```json\n\
-{{\"type\":\"interactive_question\",\"question\":\"Your question?\",\"options\":[\"Option A\",\"Option B\"]}}\n\
+{{\"type\":\"interactive_question\",\"question\":\"Your single question here?\",\"options\":[\"Option A\",\"Option B\",\"Option C\",\"Other\"]}}\n\
 ```\n\
-         • Present tables with Markdown.",
+         \n\
+         ══════════════════════════════════════════════════\n\
+         PHASE 2 — PROJECT CREATION (only after full context)\n\
+         ══════════════════════════════════════════════════\n\
+         Once you have clear answers for all five dimensions above:\n\
+         • Call create_project with a clear title and rich description summarising what was gathered.\n\
+         • Follow immediately with create_task for the 3–6 most important actionable steps.\n\
+           Use \"LAST_CREATED_GOAL\" as goal_id — the backend resolves it to the real ID.\n\
+         • For time-specific activities (meetings, classes, appointments) → call add_to_calendar instead of create_task.\n\
+           Use ISO 8601 with UTC offset e.g. 2026-07-01T08:00:00+05:30 (IST).\n\
+         • Check OCCUPIED SLOTS before proposing dates. Warn on conflicts and suggest alternatives.\n\
+         \n\
+         OTHER RULES:\n\
+         • Respond naturally to greetings / casual messages — never create a project from small talk.\n\
+         • Use context-appropriate terminology — match the user's own word (trip, event, job, learning goal, project…).\n\
+         • Present schedules and data as Markdown tables.",
         today = now.format("%A, %B %d, %Y"),
         work_start = prefs.work_start,
         work_end = prefs.work_end,
@@ -173,9 +195,12 @@ pub async fn global_chat(
                     let start_time = call.arguments["start_time"].as_str().unwrap_or("").to_string();
                     let end_time = call.arguments["end_time"].as_str().unwrap_or("").to_string();
                     if !start_time.is_empty() && !end_time.is_empty() {
-                        if let Ok(event) = repo.create_standalone_event(&user_id, &title, &start_time, &end_time) {
-                            let _ = app_handle.emit("calendar_updated", &event);
+                        match repo.create_standalone_event(&user_id, &title, &start_time, &end_time) {
+                            Ok(event) => { let _ = app_handle.emit("calendar_updated", &event); }
+                            Err(e) => eprintln!("global_chat: add_to_calendar failed: {e}"),
                         }
+                    } else {
+                        eprintln!("global_chat: add_to_calendar missing start_time or end_time (got: '{}', '{}')", start_time, end_time);
                     }
                 }
                 _ => {}

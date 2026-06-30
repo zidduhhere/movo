@@ -295,13 +295,13 @@ pub fn global_chat_tools() -> Value {
         {
             "type": "function",
             "name": "add_to_calendar",
-            "description": "Add a time block or event to the user's calendar. Check OCCUPIED SLOTS in the system prompt before scheduling.",
+            "description": "Add a fixed appointment, class, meeting, or time block to the user's calendar. Use this for ANY activity with a specific start and end time — college, gym, calls, errands. Do NOT use create_task for these. start_time and end_time MUST be full ISO 8601 datetime strings with timezone offset.",
             "parameters": {
                 "type": "object",
                 "properties": {
                     "title": { "type": "string" },
-                    "start_time": { "type": "string", "description": "ISO 8601 e.g. 2026-07-15T09:00:00Z" },
-                    "end_time":   { "type": "string", "description": "ISO 8601 e.g. 2026-07-15T10:00:00Z" }
+                    "start_time": { "type": "string", "description": "Full ISO 8601 with offset e.g. 2026-07-01T08:00:00+05:30 or 2026-07-01T08:00:00Z" },
+                    "end_time":   { "type": "string", "description": "Full ISO 8601 with offset e.g. 2026-07-01T17:00:00+05:30 or 2026-07-01T17:00:00Z" }
                 },
                 "required": ["title", "start_time", "end_time"]
             }

@@ -37,8 +37,8 @@
       {
         "label": "tray_popup",
         "title": "Movo Tasks",
-        "width": 1000,
-        "height": 150,
+        "width": 420,
+        "height": 420,
         "visible": false,
         "decorations": false,
         "transparent": true,

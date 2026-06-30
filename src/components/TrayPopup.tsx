@@ -1,238 +1,194 @@
-import { useEffect, useRef, useState } from 'react';
-import { invoke } from '@tauri-apps/api/core';
-import { emit } from '@tauri-apps/api/event';
-import { getAllWindows, getCurrentWindow } from '@tauri-apps/api/window';
-import { Sparkles, ArrowUp, ChevronDown, Mic, MicOff, Loader2, Check } from 'lucide-react';
+import { useEffect, useRef, useCallback } from 'react';
+import { getCurrentWindow } from '@tauri-apps/api/window';
+import { ArrowUp, Mic, MicOff, Loader2, Bot, User } from 'lucide-react';
 import { setLiquidGlassEffect, GlassMaterialVariant } from 'tauri-plugin-liquid-glass-api';
 import { useVoiceInput } from '../hooks/useVoiceInput';
+import { useStore } from '../store';
+import { InteractiveQuestion } from './InteractiveQuestion';
+import { parseAIMessage } from '../utils/messageParser';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
-type Mode = 'new_chat' | 'plan_goal';
+const PROSE = 'prose prose-sm max-w-none text-white/90 prose-p:my-1 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-a:text-[#4D5AE8] prose-strong:text-white';
 
-const MODE_LABELS: Record<Mode, string> = {
-    new_chat: 'New Chat',
-    plan_goal: 'Plan as Goal',
-};
-
-// Hide popup when it loses focus (user clicked elsewhere), unless we're planning
-let _isPlanning = false;
+// Hide popup when it loses focus (user clicked elsewhere), unless we're loading
+let _isLoading = false;
 getCurrentWindow().onFocusChanged(({ payload: focused }) => {
-    if (!focused && !_isPlanning) getCurrentWindow().hide();
+    if (!focused && !_isLoading) getCurrentWindow().hide();
 });
 
-async function showMainWindow() {
-    const windows = await getAllWindows();
-    const main = windows.find(w => w.label === 'main');
-    if (main) {
-        await main.show();
-        await main.setFocus();
+function TrayAIContent({ content, onSelect }: { content: string; onSelect: (val: string) => void }) {
+    const parsed = parseAIMessage(content);
+    if (parsed.type === 'interactive_question') {
+        return (
+            <div className="flex flex-col gap-2">
+                {parsed.prefix && <div className={PROSE}><ReactMarkdown remarkPlugins={[remarkGfm]}>{parsed.prefix}</ReactMarkdown></div>}
+                <InteractiveQuestion question={parsed.question} options={parsed.options} onSelect={onSelect} />
+            </div>
+        );
     }
+    return <div className={PROSE}><ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown></div>;
 }
 
 export function TrayPopup() {
     const inputRef = useRef<HTMLInputElement>(null);
-    const dropdownRef = useRef<HTMLDivElement>(null);
+    const messagesEndRef = useRef<HTMLDivElement>(null);
 
-    const [mode, setMode] = useState<Mode>('new_chat');
-    const [showDropdown, setShowDropdown] = useState(false);
-    const [showBanner, setShowBanner] = useState(true);
-    const [isPlanning, setIsPlanning] = useState(false);
-    const [planError, setPlanError] = useState<string | null>(null);
-    const [planDone, setPlanDone] = useState(false);
+    const { globalMessages, sendGlobalMessage, isLoading, fetchGlobalMessages } = useStore();
 
     const { transcript, setTranscript, isListening, micError, toggleListening, stopListening } = useVoiceInput();
 
+    // Apply glass effect and load messages on mount
     useEffect(() => {
         setLiquidGlassEffect({ variant: GlassMaterialVariant.Clear, cornerRadius: 16 }).catch(console.error);
+        fetchGlobalMessages();
         const t = setTimeout(() => inputRef.current?.focus(), 100);
         return () => clearTimeout(t);
     }, []);
 
-    // Keep module-level flag in sync so the focus-change handler can read it
-    useEffect(() => { _isPlanning = isPlanning; }, [isPlanning]);
+    // Sync the module-level flag so the focus handler doesn't dismiss during AI response
+    useEffect(() => { _isLoading = isLoading; }, [isLoading]);
 
-    // Close dropdown on outside click
+    // Scroll to bottom when messages change
     useEffect(() => {
-        if (!showDropdown) return;
-        const handler = (e: MouseEvent) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-                setShowDropdown(false);
-            }
-        };
-        document.addEventListener('mousedown', handler);
-        return () => document.removeEventListener('mousedown', handler);
-    }, [showDropdown]);
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [globalMessages, isLoading]);
 
-    const handleSubmit = async (e?: React.FormEvent) => {
+    // Refocus input after the AI finishes responding
+    useEffect(() => {
+        if (!isLoading) {
+            inputRef.current?.focus();
+        }
+    }, [isLoading]);
+
+    const handleSubmit = useCallback(async (e?: React.FormEvent) => {
         e?.preventDefault();
         const text = transcript.trim();
-        if (!text || isPlanning) return;
+        if (!text || isLoading) return;
 
         stopListening();
-        setPlanError(null);
+        setTranscript('');
+        await sendGlobalMessage(text);
+    }, [transcript, isLoading, stopListening, setTranscript, sendGlobalMessage]);
 
-        if (mode === 'new_chat') {
-            await emit('tray_quick_chat', text);
-            await showMainWindow();
-            await getCurrentWindow().hide();
-            setTranscript('');
-            return;
-        }
+    const handleOptionSelect = useCallback(async (option: string) => {
+        if (isLoading) return;
+        await sendGlobalMessage(option);
+    }, [isLoading, sendGlobalMessage]);
 
-        // plan_goal mode
-        setIsPlanning(true);
-        try {
-            await invoke('voice_capture_plan', { text });
-            setPlanDone(true);
-            setTranscript('');
-            // main window is shown by the backend; hide popup after brief flash
-            setTimeout(() => {
-                setPlanDone(false);
-                getCurrentWindow().hide();
-            }, 800);
-        } catch (err: any) {
-            setPlanError(typeof err === 'string' ? err : 'Planning failed. Make sure you are logged in.');
-        } finally {
-            setIsPlanning(false);
-        }
-    };
+    const canSubmit = transcript.trim().length > 0 && !isLoading;
 
-    const selectMode = (m: Mode) => {
-        setMode(m);
-        setShowDropdown(false);
-        inputRef.current?.focus();
-    };
-
-    const openPrivacy = async (section: string) => {
-        await invoke('open_privacy_settings', { section });
-    };
-
-    const canSubmit = transcript.trim().length > 0 && !isPlanning;
+    // Show only the last few messages in the compact popup
+    const recentMessages = globalMessages.slice(-6);
 
     return (
         <div
             className="flex flex-col h-screen text-white rounded-2xl overflow-hidden font-sans"
             style={{ background: '#1c1c1e', boxShadow: '0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.08)' }}
-            data-tauri-drag-region
         >
-            {/* Top Input Section */}
-            <form onSubmit={handleSubmit} className="flex-1 flex items-center gap-3 px-5 py-4 relative" data-tauri-drag-region>
-                {/* Logo */}
-                <div className="shrink-0 flex items-center justify-center">
-                    <Sparkles className="w-7 h-7 text-[#85D24E]" fill="currentColor" />
-                </div>
+            {/* Header */}
+            <div className="flex items-center gap-2 px-4 py-2.5 border-b border-white/8 shrink-0" data-tauri-drag-region>
+                <img src="/logo.png" alt="Movo" className="w-5 h-5 object-contain" />
+                <span className="text-[13px] font-semibold text-white/80">Movo</span>
+                {isLoading && (
+                    <span className="text-[11px] text-[#4D5AE8] flex items-center gap-1 ml-auto">
+                        <span className="inline-block w-1.5 h-1.5 bg-[#4D5AE8] rounded-full animate-pulse" />
+                        Thinking…
+                    </span>
+                )}
+            </div>
 
-                {/* Input */}
+            {/* Messages area */}
+            <div className="flex-1 overflow-y-auto px-3 py-3">
+                <div className="flex flex-col gap-3">
+                    {recentMessages.length === 0 && !isLoading && (
+                        <div className="flex flex-col items-center justify-center py-8 text-center gap-2">
+                            <div className="w-10 h-10 rounded-full bg-[#4D5AE8]/10 border border-[#4D5AE8]/30 flex items-center justify-center">
+                                <Bot className="w-5 h-5 text-[#4D5AE8]" />
+                            </div>
+                            <p className="text-[12px] text-white/40">Ask me anything — I'll help you plan and execute.</p>
+                        </div>
+                    )}
+
+                    {recentMessages.map((msg) => (
+                        <div key={msg.id} className={`flex gap-2 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+                            <div className={`w-6 h-6 rounded-full shrink-0 flex items-center justify-center mt-0.5 ${msg.role === 'user' ? 'bg-white/15' : 'bg-[#4D5AE8]/15 border border-[#4D5AE8]/30'}`}>
+                                {msg.role === 'user' ? <User className="w-3 h-3 text-white/80" /> : <Bot className="w-3 h-3 text-[#4D5AE8]" />}
+                            </div>
+                            <div className={`rounded-xl px-3 py-2 text-[13px] leading-relaxed ${
+                                msg.role === 'user'
+                                    ? 'max-w-[80%] bg-white/15 text-white rounded-tr-sm'
+                                    : 'flex-1 bg-white/8 border border-white/8 text-white/90 rounded-tl-sm'
+                            }`}>
+                                {msg.role === 'assistant'
+                                    ? <TrayAIContent content={msg.content} onSelect={handleOptionSelect} />
+                                    : <p className="whitespace-pre-wrap">{msg.content}</p>
+                                }
+                            </div>
+                        </div>
+                    ))}
+
+                    {isLoading && (
+                        <div className="flex gap-2">
+                            <div className="w-6 h-6 rounded-full shrink-0 flex items-center justify-center bg-[#4D5AE8]/15 border border-[#4D5AE8]/30">
+                                <Bot className="w-3 h-3 text-[#4D5AE8]" />
+                            </div>
+                            <div className="bg-white/8 border border-white/8 rounded-xl rounded-tl-sm px-3 py-2">
+                                <div className="flex items-center gap-1">
+                                    <div className="w-1.5 h-1.5 bg-white/30 rounded-full animate-bounce [animation-delay:-0.3s]" />
+                                    <div className="w-1.5 h-1.5 bg-white/30 rounded-full animate-bounce [animation-delay:-0.15s]" />
+                                    <div className="w-1.5 h-1.5 bg-white/30 rounded-full animate-bounce" />
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    <div ref={messagesEndRef} />
+                </div>
+            </div>
+
+            {/* Input bar */}
+            <form onSubmit={handleSubmit} className="shrink-0 flex items-center gap-2 px-3 py-3 border-t border-white/8">
                 <input
                     ref={inputRef}
                     type="text"
                     value={transcript}
                     onChange={(e) => setTranscript(e.target.value)}
-                    placeholder={isListening ? 'Listening…' : isPlanning ? 'Planning…' : 'What can I help you with today?'}
-                    disabled={isPlanning}
-                    className="flex-1 bg-transparent border-none outline-none text-[16px] text-white placeholder-white/40 focus:ring-0 ml-1 disabled:opacity-60"
+                    placeholder={isListening ? 'Listening…' : isLoading ? 'Thinking…' : 'What can I help you with?'}
+                    disabled={isLoading}
+                    className="flex-1 bg-white/8 border border-white/10 rounded-xl px-3 py-2.5 text-[14px] text-white placeholder-white/30 outline-none focus:border-[#4D5AE8]/50 focus:ring-1 focus:ring-[#4D5AE8]/20 transition-all disabled:opacity-50"
                 />
 
                 {/* Mic button */}
                 <button
                     type="button"
                     onClick={toggleListening}
-                    disabled={isPlanning}
+                    disabled={isLoading}
                     title={micError ?? (isListening ? 'Stop listening' : 'Voice input')}
-                    className={`shrink-0 p-1.5 rounded-lg transition-colors disabled:opacity-40 ${
+                    className={`shrink-0 p-2 rounded-lg transition-colors disabled:opacity-40 ${
                         micError
                             ? 'text-red-400'
                             : isListening
-                            ? 'text-[#85D24E] bg-[#85D24E]/10 animate-pulse'
+                            ? 'text-[#4D5AE8] bg-[#4D5AE8]/10 animate-pulse'
                             : 'text-white/40 hover:text-white/80'
                     }`}
                 >
                     {micError ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
                 </button>
 
-                {/* Mode dropdown */}
-                <div ref={dropdownRef} className="relative shrink-0">
-                    <button
-                        type="button"
-                        onClick={() => setShowDropdown(v => !v)}
-                        className="flex items-center gap-1.5 text-[13px] font-medium text-white/60 hover:text-white transition-colors mr-1"
-                    >
-                        {MODE_LABELS[mode]} <ChevronDown className={`w-4 h-4 opacity-70 transition-transform ${showDropdown ? 'rotate-180' : ''}`} />
-                    </button>
-
-                    {showDropdown && (
-                        <div className="absolute right-0 bottom-full mb-2 bg-[#2c2c2e] border border-white/10 rounded-xl shadow-2xl overflow-hidden min-w-[160px] z-50">
-                            {(Object.entries(MODE_LABELS) as [Mode, string][]).map(([key, label]) => (
-                                <button
-                                    key={key}
-                                    type="button"
-                                    onClick={() => selectMode(key)}
-                                    className="flex items-center justify-between w-full px-4 py-2.5 text-[13px] text-white/80 hover:bg-white/5 hover:text-white transition-colors text-left"
-                                >
-                                    {label}
-                                    {mode === key && <Check className="w-3.5 h-3.5 text-[#85D24E]" />}
-                                </button>
-                            ))}
-                        </div>
-                    )}
-                </div>
-
-                {/* Submit button */}
+                {/* Send button */}
                 <button
                     type="submit"
                     disabled={!canSubmit}
-                    className="w-8 h-8 rounded-lg bg-[#85D24E] hover:bg-[#7bc248] disabled:opacity-50 disabled:hover:bg-[#85D24E] flex items-center justify-center shrink-0 shadow-sm transition-all"
+                    className="w-8 h-8 rounded-lg bg-[#4D5AE8] hover:bg-[#4048C9] disabled:opacity-40 disabled:hover:bg-[#4D5AE8] flex items-center justify-center shrink-0 shadow-sm transition-all"
                 >
-                    {isPlanning ? (
+                    {isLoading ? (
                         <Loader2 className="w-4 h-4 text-[#1c1c1e] animate-spin" />
-                    ) : planDone ? (
-                        <Check className="w-4 h-4 text-[#1c1c1e]" />
                     ) : (
                         <ArrowUp className="w-5 h-5 text-[#1c1c1e] stroke-[2.5]" />
                     )}
                 </button>
             </form>
-
-            {/* Plan error */}
-            {planError && (
-                <div className="px-5 py-2 bg-red-900/30 border-t border-red-500/20 text-[12px] text-red-300">
-                    {planError}
-                </div>
-            )}
-
-            {/* Bottom Permission Banner */}
-            {showBanner && (
-                <div className="flex items-center justify-between px-5 py-3.5 bg-[#252528] border-t border-white/5">
-                    <div className="flex flex-col justify-center">
-                        <span className="text-[13px] font-semibold text-white tracking-wide">
-                            Quickly share content with Movo
-                        </span>
-                        <span className="text-[12px] text-white/50 mt-0.5">
-                            Needs additional permission
-                        </span>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={() => openPrivacy('Privacy_ScreenCapture')}
-                            className="px-3.5 py-1.5 rounded-lg border border-white/10 bg-transparent text-[12px] font-medium text-white/90 hover:bg-white/5 hover:border-white/20 transition-all"
-                        >
-                            Turn on screenshots
-                        </button>
-                        <button
-                            onClick={() => openPrivacy('Privacy_FilesAndFolders')}
-                            className="px-3.5 py-1.5 rounded-lg border border-white/10 bg-transparent text-[12px] font-medium text-white/90 hover:bg-white/5 hover:border-white/20 transition-all"
-                        >
-                            Turn on file sharing
-                        </button>
-                        <button
-                            onClick={() => setShowBanner(false)}
-                            className="px-3.5 py-1.5 rounded-lg border border-white/10 bg-transparent text-[12px] font-medium text-white/50 hover:bg-white/5 hover:border-white/20 hover:text-white/90 transition-all"
-                        >
-                            Not now
-                        </button>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }

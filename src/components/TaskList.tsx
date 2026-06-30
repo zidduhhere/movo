@@ -69,10 +69,10 @@ export function TaskList() {
                         <button
                             onClick={() => !isDone && handleComplete(task.id)}
                             disabled={isDone || isCompletingNow}
-                            className="mt-0.5 text-black/20 hover:text-[#85D24E] transition-colors focus:outline-none disabled:cursor-default"
+                            className="mt-0.5 text-black/20 hover:text-[#4D5AE8] transition-colors focus:outline-none disabled:cursor-default"
                         >
                             {isDone
-                                ? <CheckCircle2 className="w-5 h-5 text-[#85D24E]" strokeWidth={1.5} />
+                                ? <CheckCircle2 className="w-5 h-5 text-[#4D5AE8]" strokeWidth={1.5} />
                                 : <Circle className="w-5 h-5" strokeWidth={1.5} />
                             }
                         </button>
@@ -88,7 +88,7 @@ export function TaskList() {
                                 {hoveredTaskId === task.id && !isDone && (
                                     <button
                                         onClick={() => setFocusTask(task.id)}
-                                        className="text-[11px] font-medium text-[#85D24E] hover:text-[#78C245] uppercase tracking-wider ml-4 shrink-0"
+                                        className="text-[11px] font-medium text-[#4D5AE8] hover:text-[#4048C9] uppercase tracking-wider ml-4 shrink-0"
                                     >
                                         Start
                                     </button>
@@ -126,7 +126,7 @@ export function TaskList() {
                 <p className="text-[#8E8E93] text-[13px] py-8 text-center">
                     {activeView === 'completed' ? 'No completed tasks yet.' :
                      activeView === 'upcoming' ? 'No tasks with upcoming deadlines.' :
-                     activeView === 'recent' ? 'No tasks created in the last 7 days.' :
+                     activeView === 'recent' ? 'No tasks created in the last 14 days.' :
                      'No tasks planned yet.'}
                 </p>
             )}

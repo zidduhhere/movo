@@ -25,7 +25,7 @@ export function Sidebar() {
                     className={clsx(
                         'flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-[13px] font-semibold transition-colors',
                         activeView === 'new_project'
-                            ? 'bg-[#85D24E] text-black shadow-sm'
+                            ? 'bg-[#4D5AE8] text-white shadow-sm'
                             : 'bg-white/10 text-white hover:bg-white/20'
                     )}
                 >
@@ -39,9 +39,9 @@ export function Sidebar() {
                         <span className="text-[11px] font-semibold text-white/50 uppercase tracking-wider">Library</span>
                     </div>
                     
-                    <SidebarItem 
-                        icon={<Library className="w-4 h-4" />} 
-                        label="All Goals" 
+                    <SidebarItem
+                        icon={<Library className="w-4 h-4" />}
+                        label="All Tasks"
                         active={activeView === 'all'}
                         onClick={() => setActiveView('all')}
                     />
@@ -94,12 +94,12 @@ export function Sidebar() {
                                 onClick={() => setActiveGoal(goal.id)}
                                 className={clsx(
                                     "group flex flex-col gap-1 px-2.5 py-1.5 rounded-lg cursor-pointer transition-colors text-[13px] font-medium",
-                                    isActive ? "bg-[#85D24E] text-black shadow-sm" : "hover:bg-white/10 text-white/80 hover:text-white"
+                                    isActive ? "bg-[#4D5AE8] text-white shadow-sm" : "hover:bg-white/10 text-white/80 hover:text-white"
                                 )}
                             >
                                 <div className="flex items-center justify-between gap-2.5">
                                     <div className="flex items-center gap-2.5 overflow-hidden">
-                                        <Target className={clsx("w-4 h-4 shrink-0", isActive ? "text-black opacity-90" : "text-[#85D24E] opacity-80")} />
+                                        <Target className={clsx("w-4 h-4 shrink-0", isActive ? "text-black opacity-90" : "text-[#4D5AE8] opacity-80")} />
                                         <span className="truncate">{goal.title}</span>
                                     </div>
                                     <button
@@ -123,7 +123,7 @@ export function Sidebar() {
                                     <div className="flex items-center gap-2 pl-6">
                                         <div className={clsx("flex-1 h-1 rounded-full overflow-hidden", isActive ? "bg-black/20" : "bg-white/10")}>
                                             <div
-                                                className={clsx("h-full rounded-full transition-all", isActive ? "bg-black/60" : "bg-[#85D24E]")}
+                                                className={clsx("h-full rounded-full transition-all", isActive ? "bg-black/60" : "bg-[#4D5AE8]")}
                                                 style={{ width: `${pct * 100}%` }}
                                             />
                                         </div>
@@ -181,10 +181,10 @@ function SidebarItem({ icon, label, active = false, onClick }: { icon: React.Rea
             onClick={onClick}
             className={clsx(
                 "flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg cursor-pointer transition-colors text-[13px] font-medium",
-                active ? "bg-[#85D24E] text-black shadow-sm" : "hover:bg-white/10 text-white/80 hover:text-white"
+                active ? "bg-[#4D5AE8] text-white shadow-sm" : "hover:bg-white/10 text-white/80 hover:text-white"
             )}
         >
-            <div className={clsx("opacity-80 shrink-0", active ? "text-black" : "text-[#85D24E]")}>{icon}</div>
+            <div className={clsx("opacity-80 shrink-0", active ? "text-black" : "text-[#4D5AE8]")}>{icon}</div>
             <span className="truncate">{label}</span>
         </div>
     );

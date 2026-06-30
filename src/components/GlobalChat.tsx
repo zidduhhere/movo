@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { listen } from '@tauri-apps/api/event';
-import { Bot, User, Send, Loader2, Mic } from 'lucide-react';
+import { Bot, User, Send, Loader2, Mic, PanelLeft } from 'lucide-react';
 import { useStore } from '../store';
 import { SettingsDropdown } from './SettingsDropdown';
 import { InteractiveQuestion } from './InteractiveQuestion';
@@ -11,7 +11,7 @@ import { motion } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
-const PROSE = 'prose prose-sm max-w-none text-[#1C1C1E] prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-li:my-0.5 prose-a:text-[#85D24E]';
+const PROSE = 'prose prose-sm max-w-none text-[#1C1C1E] prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-li:my-0.5 prose-a:text-[#4D5AE8]';
 
 function AIMessageContent({ content, onSelect }: { content: string; onSelect: (val: string) => void }) {
     const parsed = parseAIMessage(content);
@@ -30,8 +30,9 @@ export function GlobalChat() {
     const [input, setInput] = useState('');
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const hasMounted = useRef(false);
 
-    const { globalMessages, sendGlobalMessage, isLoading, isSidebarOpen, fetchGoals,
+    const { globalMessages, sendGlobalMessage, isLoading, isSidebarOpen, toggleSidebar, fetchGoals,
             pendingTrayCapture, setPendingTrayCapture } = useStore();
 
     const { isListening, toggleListening } = useVoiceInput({
@@ -43,11 +44,16 @@ export function GlobalChat() {
         return () => { unlisten.then((fn) => fn()); };
     }, [fetchGoals]);
 
+    // Mark as mounted after first render so the tray capture effect has a stable handleSend
+    useEffect(() => { hasMounted.current = true; }, []);
+
     // Auto-send text that arrived from the tray popup
     useEffect(() => {
-        if (pendingTrayCapture) {
+        if (pendingTrayCapture && hasMounted.current) {
+            const text = pendingTrayCapture;
             setPendingTrayCapture(null);
-            handleSend(pendingTrayCapture);
+            // Small delay ensures sendGlobalMessage reference is stable
+            requestAnimationFrame(() => handleSend(text));
         }
     }, [pendingTrayCapture, setPendingTrayCapture]);
 
@@ -75,11 +81,17 @@ export function GlobalChat() {
             {/* Toolbar */}
             <div className={clsx('shrink-0 h-[76px] pt-4 flex items-center justify-between px-5 border-b border-black/8 bg-white/60 backdrop-blur-sm', !isSidebarOpen && 'pl-20')}>
                 <div className="flex items-center gap-3 pointer-events-auto no-drag">
+                    <button onClick={toggleSidebar} className="p-2 rounded-full bg-white border border-[#E5E5E5] shadow-sm hover:bg-black/5 transition-colors text-[#2D2D2D] focus:outline-none flex items-center justify-center h-9 w-9">
+                        <PanelLeft className="w-4 h-4" />
+                    </button>
                     <div>
-                        <h1 className="text-[14px] font-semibold text-[#1C1C1E] leading-tight">Movo</h1>
+                        <div className="flex items-center gap-2">
+                            <img src="/logo.png" alt="Movo" className="w-5 h-5 object-contain" />
+                            <h1 className="text-[14px] font-semibold text-[#1C1C1E] leading-tight">Movo</h1>
+                        </div>
                         {isLoading
-                            ? <p className="text-[11px] text-[#85D24E] flex items-center gap-1">
-                                <span className="inline-block w-1.5 h-1.5 bg-[#85D24E] rounded-full animate-pulse" />
+                            ? <p className="text-[11px] text-[#4D5AE8] flex items-center gap-1">
+                                <span className="inline-block w-1.5 h-1.5 bg-[#4D5AE8] rounded-full animate-pulse" />
                                 Thinking…
                               </p>
                             : <p className="text-[11px] text-black/40">AI Chief of Staff</p>
@@ -96,8 +108,8 @@ export function GlobalChat() {
                 <div className="max-w-[720px] mx-auto px-6 py-8 flex flex-col gap-6">
                     {globalMessages.length === 0 && !isLoading && (
                         <div className="flex flex-col items-center justify-center py-20 text-center gap-4">
-                            <div className="w-14 h-14 rounded-full bg-[#85D24E]/10 border border-[#85D24E]/30 flex items-center justify-center">
-                                <Bot className="w-7 h-7 text-[#85D24E]" />
+                            <div className="w-14 h-14 rounded-full bg-[#4D5AE8]/10 border border-[#4D5AE8]/30 flex items-center justify-center">
+                                <Bot className="w-7 h-7 text-[#4D5AE8]" />
                             </div>
                             <div>
                                 <p className="text-[15px] font-semibold text-[#1C1C1E]">What are you working toward?</p>
@@ -108,8 +120,8 @@ export function GlobalChat() {
 
                     {globalMessages.map((msg) => (
                         <div key={msg.id} className={clsx('flex gap-3', msg.role === 'user' ? 'flex-row-reverse' : 'flex-row')}>
-                            <div className={clsx('w-8 h-8 rounded-full shrink-0 flex items-center justify-center mt-0.5', msg.role === 'user' ? 'bg-[#1C1C1E] text-white' : 'bg-[#85D24E]/10 border border-[#85D24E]/30')}>
-                                {msg.role === 'user' ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4 text-[#85D24E]" />}
+                            <div className={clsx('w-8 h-8 rounded-full shrink-0 flex items-center justify-center mt-0.5', msg.role === 'user' ? 'bg-[#1C1C1E] text-white' : 'bg-[#4D5AE8]/10 border border-[#4D5AE8]/30')}>
+                                {msg.role === 'user' ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4 text-[#4D5AE8]" />}
                             </div>
                             <div className={clsx(
                                 'rounded-2xl px-4 py-3 text-[14px] leading-relaxed',
@@ -127,8 +139,8 @@ export function GlobalChat() {
 
                     {isLoading && (
                         <div className="flex gap-3">
-                            <div className="w-8 h-8 rounded-full shrink-0 flex items-center justify-center bg-[#85D24E]/10 border border-[#85D24E]/30">
-                                <Bot className="w-4 h-4 text-[#85D24E]" />
+                            <div className="w-8 h-8 rounded-full shrink-0 flex items-center justify-center bg-[#4D5AE8]/10 border border-[#4D5AE8]/30">
+                                <Bot className="w-4 h-4 text-[#4D5AE8]" />
                             </div>
                             <div className="bg-white border border-black/8 rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm">
                                 <div className="flex items-center gap-1.5">
@@ -146,7 +158,7 @@ export function GlobalChat() {
             {/* Input Bar */}
             <div className="shrink-0 px-6 py-4 border-t border-black/8 bg-white/80 backdrop-blur-sm">
                 <div className="max-w-[720px] mx-auto">
-                    <motion.div layoutId="global-chat-input" className="flex items-end gap-3 bg-white border border-black/12 rounded-2xl px-4 py-3 shadow-[0_8px_30px_rgba(0,0,0,0.06)] focus-within:border-[#85D24E] focus-within:ring-2 focus-within:ring-[#85D24E]/20 transition-all">
+                    <motion.div layoutId="global-chat-input" className="flex items-end gap-3 bg-white border border-black/12 rounded-2xl px-4 py-3 shadow-[0_8px_30px_rgba(0,0,0,0.06)] focus-within:border-[#4D5AE8] focus-within:ring-2 focus-within:ring-[#4D5AE8]/20 transition-all">
                         <textarea
                             ref={textareaRef}
                             value={input}
@@ -169,7 +181,7 @@ export function GlobalChat() {
                                 className={clsx(
                                     'shrink-0 p-1.5 rounded-full transition-colors mb-0.5',
                                     isListening
-                                        ? 'text-[#85D24E] bg-[#85D24E]/10 animate-pulse'
+                                        ? 'text-[#4D5AE8] bg-[#4D5AE8]/10 animate-pulse'
                                         : 'text-black/40 hover:text-[#1C1C1E] hover:bg-black/5'
                                 )}
                             >

@@ -10,21 +10,13 @@ export function EmptyState() {
     const [isPlanning, setIsPlanning] = useState(false);
     const [planningStatus, setPlanningStatus] = useState<string>('Initializing...');
 
-    const { user, createGoal, planGoal, tasks, pendingTrayCapture, setPendingTrayCapture } = useStore();
+    const { user, createGoal, planGoal, tasks } = useStore();
 
     const { isListening, micError, toggleListening, stopListening } = useVoiceInput({
         onTranscript: (text) => setTitle(text),
     });
 
     const activeTasksCount = tasks.filter(t => t.status === 'todo' || t.status === 'inprogress').length;
-
-    // Pre-fill from tray popup "New Chat" capture
-    useEffect(() => {
-        if (pendingTrayCapture) {
-            setTitle(pendingTrayCapture);
-            setPendingTrayCapture(null);
-        }
-    }, [pendingTrayCapture, setPendingTrayCapture]);
 
     useEffect(() => {
         let unlisten: (() => void) | undefined;
@@ -85,7 +77,7 @@ export function EmptyState() {
             <form onSubmit={handleSubmit} className="w-full flex flex-col items-center justify-center relative">
                 <motion.div 
                     layoutId="chat-input-bar"
-                    className={`relative flex items-center gap-3 w-full max-w-[700px] bg-white border border-[#E5E5EA] rounded-full px-6 py-4 shadow-[0_8px_30px_rgba(0,0,0,0.04)] transition-all duration-300 focus-within:border-[#85D24E] focus-within:ring-2 focus-within:ring-[#85D24E]/20 ${isPlanning ? 'opacity-80 scale-[0.98]' : 'hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)]'}`}
+                    className={`relative flex items-center gap-3 w-full max-w-[700px] bg-white border border-[#E5E5EA] rounded-full px-6 py-4 shadow-[0_8px_30px_rgba(0,0,0,0.04)] transition-all duration-300 focus-within:border-[#4D5AE8] focus-within:ring-2 focus-within:ring-[#4D5AE8]/20 ${isPlanning ? 'opacity-80 scale-[0.98]' : 'hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)]'}`}
                 >
                     <button 
                         type="button"
@@ -114,7 +106,7 @@ export function EmptyState() {
                             micError
                                 ? 'text-red-400'
                                 : isListening
-                                ? 'text-[#85D24E] bg-[#85D24E]/10 animate-pulse'
+                                ? 'text-[#4D5AE8] bg-[#4D5AE8]/10 animate-pulse'
                                 : 'text-[#8E8E93] hover:text-[#1C1C1E] hover:bg-black/5'
                         }`}
                     >
@@ -134,8 +126,8 @@ export function EmptyState() {
             {/* Activities Today Indicators */}
             <div className={`mt-16 flex gap-4 transition-all duration-700 delay-300 ${isPlanning ? 'opacity-0 translate-y-4 pointer-events-none' : 'opacity-100 translate-y-0'}`}>
                 <div className="flex items-center gap-3.5 px-6 py-4 rounded-2xl bg-white border border-black/5 shadow-[0_2px_15px_rgba(0,0,0,0.03)] hover:shadow-[0_4px_20px_rgba(0,0,0,0.06)] transition-all cursor-pointer">
-                    <div className="w-11 h-11 rounded-full bg-[#85D24E]/15 flex items-center justify-center">
-                        <ListTodo className="w-5 h-5 text-[#5a9c35]" />
+                    <div className="w-11 h-11 rounded-full bg-[#4D5AE8]/15 flex items-center justify-center">
+                        <ListTodo className="w-5 h-5 text-[#3B44A8]" />
                     </div>
                     <div className="text-left pr-2">
                         <p className="text-[12px] text-black/40 font-medium uppercase tracking-wider mb-0.5">Today's Focus</p>

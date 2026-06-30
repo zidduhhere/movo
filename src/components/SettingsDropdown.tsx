@@ -1,5 +1,5 @@
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { Settings, LogOut, User, Link } from 'lucide-react';
+import { Settings, LogOut, User } from 'lucide-react';
 import { useState } from 'react';
 import { AppSettingsSheet } from './AppSettingsSheet';
 
@@ -28,17 +28,18 @@ export function SettingsDropdown() {
                             <User className="w-4 h-4" />
                             Account Settings...
                         </DropdownMenu.Item>
-                        
-                        <DropdownMenu.Item className="flex items-center gap-2 px-3 py-1.5 text-[13px] text-black outline-none rounded-md cursor-default focus:bg-[#007AFF] focus:text-white transition-colors">
-                            <Link className="w-4 h-4" />
-                            Integrations
-                        </DropdownMenu.Item>
-
                         <DropdownMenu.Separator className="h-px bg-black/10 my-1 mx-1" />
                         
-                        <DropdownMenu.Item className="flex items-center gap-2 px-3 py-1.5 text-[13px] text-black outline-none rounded-md cursor-default focus:bg-[#007AFF] focus:text-white transition-colors">
+                        <DropdownMenu.Item 
+                            className="flex items-center gap-2 px-3 py-1.5 text-[13px] text-black outline-none rounded-md cursor-default focus:bg-[#007AFF] focus:text-white transition-colors"
+                            onSelect={() => {
+                                import('../store').then(({ useStore }) => {
+                                    useStore.getState().logout();
+                                });
+                            }}
+                        >
                             <LogOut className="w-4 h-4" />
-                            Quit Movo
+                            Log Out
                         </DropdownMenu.Item>
                     </DropdownMenu.Content>
                 </DropdownMenu.Portal>

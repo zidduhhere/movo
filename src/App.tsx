@@ -14,7 +14,7 @@ import { CommandPalette } from './components/CommandPalette';
 import { Onboarding } from './components/Onboarding';
 import { CalendarView } from './components/CalendarView';
 import { useStore, ConflictInfo } from './store';
-import { PanelLeft, Plus, AlertTriangle, X, RefreshCw } from 'lucide-react';
+import { PanelLeft, Plus, AlertTriangle, X, RefreshCw, MessageSquare } from 'lucide-react';
 import clsx from 'clsx';
 import { AnimatePresence, motion } from 'framer-motion';
 
@@ -47,7 +47,8 @@ function App() {
 
   useEffect(() => {
     if (!user) return;
-    const unlisten = listen<string>('navigate_to_goal', (event) => {
+    const unlisten = listen<string>('navigate_to_goal', async (event) => {
+      await useStore.getState().fetchGoals();
       setActiveGoal(event.payload);
     });
     return () => { unlisten.then((fn) => fn()); };
@@ -55,8 +56,9 @@ function App() {
 
   const refreshCalendar = useCallback(() => {
     const now = new Date();
-    const start = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-    const end   = new Date(now.getFullYear(), now.getMonth() + 2, 1).toISOString();
+    // Fetch 3 months centred on today so any AI-created event lands in view
+    const start = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString();
+    const end   = new Date(now.getFullYear(), now.getMonth() + 3, 1).toISOString();
     fetchEvents(start, end);
   }, [fetchEvents]);
 
@@ -82,6 +84,15 @@ function App() {
     });
     return () => { unlisten.then((fn) => fn()); };
   }, [user, setPendingTrayCapture, setActiveView]);
+
+  // Refresh goal list when the tray popup creates a goal in a separate window
+  useEffect(() => {
+    if (!user) return;
+    const unlisten = listen('goal_created', () => {
+      useStore.getState().fetchGoals();
+    });
+    return () => { unlisten.then((fn) => fn()); };
+  }, [user]);
 
   // Poll notifications every 60s (also handles deadline alerts + daily summary)
   useEffect(() => {
@@ -230,12 +241,12 @@ function App() {
                       showListChat ? 'bg-[#1C1C1E] text-white border-transparent' : 'bg-white border-black/10 text-black/70 hover:bg-black/5'
                     )}
                   >
-                    <Plus className="w-3.5 h-3.5" />
+                    <MessageSquare className="w-3.5 h-3.5" />
                     Ask AI
                   </button>
                   <button
                     onClick={() => setActiveView('new_project')}
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-[#85D24E] hover:bg-[#7bc248] text-black text-[13px] font-semibold shadow-sm transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-[#4D5AE8] hover:bg-[#4048C9] text-white text-[13px] font-semibold shadow-sm transition-colors"
                   >
                     <Plus className="w-4 h-4" />
                     New Goal

@@ -82,25 +82,23 @@ pub fn run() {
                             if visible {
                                 let _ = popup.hide();
                             } else {
-                                // Show first — positioner requires the window to exist on-screen
-                                let _ = popup.show();
-                                if let Ok(Some(monitor)) = popup.current_monitor() {
+                                // Size and position before showing to avoid a visible flash
+                                let monitor = app.primary_monitor()
+                                    .ok().flatten()
+                                    .or_else(|| popup.current_monitor().ok().flatten());
+                                if let Some(monitor) = monitor {
                                     let scale = monitor.scale_factor();
                                     let screen_w = monitor.size().width as f64 / scale;
                                     let screen_h = monitor.size().height as f64 / scale;
-                                    
-                                    let width = screen_w * 0.7;
-                                    let height = 180.0;
+                                    let width = 420.0;
+                                    let height = 420.0;
                                     let _ = popup.set_size(tauri::Size::Logical(tauri::LogicalSize { width, height }));
-                                    
-                                    // Center horizontally
                                     let x = (screen_w - width) / 2.0;
-                                    // 15% margin from bottom
                                     let bottom_margin = screen_h * 0.15;
                                     let y = screen_h - height - bottom_margin;
-                                    
                                     let _ = popup.set_position(tauri::Position::Logical(tauri::LogicalPosition { x, y }));
                                 }
+                                let _ = popup.show();
                                 let _ = popup.set_focus();
                             }
                         }

@@ -12,7 +12,13 @@ function tryParseInteractive(raw: string): { question: string; options: string[]
             Array.isArray(parsed.options) &&
             parsed.options.every((o: unknown) => typeof o === 'string')
         ) {
-            return { question: parsed.question, options: parsed.options };
+            const options: string[] = parsed.options;
+            // Always ensure "Other" is the last option as a fallback
+            const hasOther = options.some((o) => /^other$/i.test(o.trim()));
+            return {
+                question: parsed.question,
+                options: hasOther ? options : [...options, 'Other'],
+            };
         }
     } catch {}
     return null;
