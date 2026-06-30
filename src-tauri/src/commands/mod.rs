@@ -11,3 +11,4 @@ pub mod voice;
 pub mod notifications;
 pub mod tray;
 pub mod recommendations;
+pub mod task_chat;
