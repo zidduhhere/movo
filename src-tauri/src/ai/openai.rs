@@ -83,11 +83,23 @@ fn extract_tool_calls(resp: &Value) -> Vec<ToolCall> {
 impl OpenAiProvider {
     pub fn new() -> Result<Self, String> {
         let api_key = env::var("OPENAI_API_KEY")
-            .map_err(|_| "OPENAI_API_KEY not set in environment".to_string())?;
+            .or_else(|_| {
+                option_env!("OPENAI_API_KEY")
+                    .map(|s| s.to_string())
+                    .ok_or_else(|| "OPENAI_API_KEY not set".to_string())
+            })?;
         let base_url = env::var("OPENAI_BASE_URL")
-            .unwrap_or_else(|_| "https://api.openai.com/v1".to_string());
+            .unwrap_or_else(|_| {
+                option_env!("OPENAI_BASE_URL")
+                    .unwrap_or("https://api.openai.com/v1")
+                    .to_string()
+            });
         let model_name = env::var("OPENAI_MODEL")
-            .unwrap_or_else(|_| "openai.gpt-oss-120b-1:0".to_string());
+            .unwrap_or_else(|_| {
+                option_env!("OPENAI_MODEL")
+                    .unwrap_or("openai.gpt-oss-120b-1:0")
+                    .to_string()
+            });
         Ok(Self {
             api_key,
             base_url,
