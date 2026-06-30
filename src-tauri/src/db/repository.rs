@@ -3,6 +3,20 @@ use chrono::Utc;
 use crate::models::{Goal, GoalStatus, Task, TaskStatus, User, ChatMessage, ChatRole, Event, EventStatus, UserPreferences, CalendarEvent};
 use uuid::Uuid;
 
+#[derive(Debug)]
+pub struct TaskContext {
+    pub task: Task,
+    pub goal_title: String,
+    pub event: Option<CalendarEvent>,
+}
+
+#[derive(Debug, serde::Deserialize)]
+pub struct SubtaskInput {
+    pub title: String,
+    pub effort_minutes: i32,
+    pub priority: i32,
+}
+
 pub struct Repository<'a> {
     conn: &'a Connection,
 }
@@ -570,6 +584,126 @@ impl<'a> Repository<'a> {
         )?;
         Ok(())
     }
+
+    pub fn get_or_create_global_goal(&self, user_id: &str) -> Result<String> {
+        let goal_id = format!("__global_{}", user_id);
+        self.conn.execute(
+            "INSERT OR IGNORE INTO goals (id, user_id, title, status, created_at)
+             VALUES (?1, ?2, '__global_chat__', 'archived', ?3)",
+            params![goal_id, user_id, chrono::Utc::now().to_rfc3339()],
+        )?;
+        Ok(goal_id)
+    }
+
+    pub fn get_task_with_goal_event(&self, task_id: &str) -> Result<TaskContext> {
+        let (task, goal_title) = self.conn.query_row(
+            "SELECT t.id, t.goal_id, t.title, t.description, t.status,
+                    t.effort_minutes, t.priority, t.created_at, t.deadline, g.title
+             FROM tasks t
+             INNER JOIN goals g ON t.goal_id = g.id
+             WHERE t.id = ?1",
+            params![task_id],
+            |row| {
+                let status_str: String = row.get(4)?;
+                let status = status_str.parse().unwrap_or(TaskStatus::Todo);
+                Ok((
+                    Task {
+                        id: row.get(0)?,
+                        goal_id: row.get(1)?,
+                        title: row.get(2)?,
+                        description: row.get(3)?,
+                        status,
+                        effort_minutes: row.get(5)?,
+                        priority: row.get(6)?,
+                        created_at: row.get(7)?,
+                        deadline: row.get(8)?,
+                    },
+                    row.get::<_, String>(9)?,
+                ))
+            },
+        )?;
+
+        let mut stmt = self.conn.prepare(
+            "SELECT id, task_id, title, start_time, end_time, status
+             FROM events WHERE task_id = ?1 ORDER BY start_time DESC LIMIT 1",
+        )?;
+        let event = stmt
+            .query_row(params![task_id], |row| {
+                Ok(CalendarEvent {
+                    id: row.get(0)?,
+                    task_id: row.get(1)?,
+                    title: row.get(2)?,
+                    start_time: row.get(3)?,
+                    end_time: row.get(4)?,
+                    status: row.get(5)?,
+                    goal_id: None,
+                    goal_title: None,
+                })
+            })
+            .ok();
+
+        Ok(TaskContext { task, goal_title, event })
+    }
+
+    pub fn reschedule_task_event(
+        &self,
+        user_id: &str,
+        task_id: &str,
+        title: &str,
+        new_start: &str,
+        new_end: &str,
+    ) -> Result<CalendarEvent> {
+        self.conn.execute("DELETE FROM events WHERE task_id = ?1", params![task_id])?;
+        let id = uuid::Uuid::new_v4().to_string();
+        self.conn.execute(
+            "INSERT INTO events (id, task_id, title, start_time, end_time, status, user_id)
+             VALUES (?1, ?2, ?3, ?4, ?5, 'scheduled', ?6)",
+            params![id, task_id, title, new_start, new_end, user_id],
+        )?;
+        Ok(CalendarEvent {
+            id,
+            task_id: Some(task_id.to_string()),
+            title: title.to_string(),
+            start_time: new_start.to_string(),
+            end_time: new_end.to_string(),
+            status: "scheduled".to_string(),
+            goal_id: None,
+            goal_title: None,
+        })
+    }
+
+    pub fn split_into_subtasks(
+        &self,
+        task_id: &str,
+        subtasks: &[SubtaskInput],
+    ) -> Result<Vec<Task>> {
+        let goal_id: String = self.conn.query_row(
+            "SELECT goal_id FROM tasks WHERE id = ?1",
+            params![task_id],
+            |row| row.get(0),
+        )?;
+        self.conn.execute(
+            "UPDATE tasks SET status = 'completed' WHERE id = ?1",
+            params![task_id],
+        )?;
+        let mut created = Vec::new();
+        for sub in subtasks {
+            let new_task = Task {
+                id: uuid::Uuid::new_v4().to_string(),
+                goal_id: Some(goal_id.clone()),
+                title: sub.title.clone(),
+                description: None,
+                status: TaskStatus::Todo,
+                effort_minutes: sub.effort_minutes,
+                priority: sub.priority,
+                created_at: chrono::Utc::now().to_rfc3339(),
+                deadline: None,
+            };
+            self.add_task(&new_task)?;
+            created.push(new_task);
+        }
+        Ok(created)
+    }
 }
 
 #[cfg(test)]
@@ -662,5 +796,55 @@ mod tests {
             "SELECT COUNT(*) FROM events WHERE task_id = 't1'", [], |r| r.get(0)
         ).unwrap();
         assert_eq!(count, 1);
+    }
+
+    #[test]
+    fn get_or_create_global_goal_is_idempotent() {
+        let conn = setup();
+        conn.execute(
+            "INSERT INTO users (id,email,name,password_hash,created_at) VALUES ('u1','a@b.com','A','x','2026-01-01')",
+            [],
+        ).unwrap();
+        let repo = Repository::new(&conn);
+        let id1 = repo.get_or_create_global_goal("u1").unwrap();
+        let id2 = repo.get_or_create_global_goal("u1").unwrap();
+        assert_eq!(id1, id2);
+        assert_eq!(id1, "__global_u1");
+        let count: i64 = conn.query_row(
+            "SELECT COUNT(*) FROM goals WHERE id = '__global_u1'", [], |r| r.get(0)
+        ).unwrap();
+        assert_eq!(count, 1);
+    }
+
+    #[test]
+    fn reschedule_task_event_replaces_old_event() {
+        let conn = setup();
+        conn.execute("INSERT INTO users (id,email,name,password_hash,created_at) VALUES ('u1','a@b.com','A','x','2026-01-01')", []).unwrap();
+        conn.execute("INSERT INTO goals (id,user_id,title,status,created_at) VALUES ('g1','u1','G','active','2026-01-01')", []).unwrap();
+        conn.execute("INSERT INTO tasks (id,goal_id,title,status,effort_minutes,priority,created_at) VALUES ('t1','g1','Task','todo',60,1,'2026-01-01')", []).unwrap();
+        let repo = Repository::new(&conn);
+        repo.create_scheduled_event_for_task("u1", "t1", "Task", "2026-07-01T09:00:00Z", "2026-07-01T10:00:00Z").unwrap();
+        repo.reschedule_task_event("u1", "t1", "Task", "2026-07-07T10:00:00Z", "2026-07-07T11:00:00Z").unwrap();
+        let count: i64 = conn.query_row("SELECT COUNT(*) FROM events WHERE task_id='t1'", [], |r| r.get(0)).unwrap();
+        assert_eq!(count, 1);
+        let start: String = conn.query_row("SELECT start_time FROM events WHERE task_id='t1'", [], |r| r.get(0)).unwrap();
+        assert!(start.contains("2026-07-07"));
+    }
+
+    #[test]
+    fn split_into_subtasks_completes_original_and_creates_children() {
+        let conn = setup();
+        conn.execute("INSERT INTO users (id,email,name,password_hash,created_at) VALUES ('u1','a@b.com','A','x','2026-01-01')", []).unwrap();
+        conn.execute("INSERT INTO goals (id,user_id,title,status,created_at) VALUES ('g1','u1','G','active','2026-01-01')", []).unwrap();
+        conn.execute("INSERT INTO tasks (id,goal_id,title,status,effort_minutes,priority,created_at) VALUES ('t1','g1','Big Task','todo',120,1,'2026-01-01')", []).unwrap();
+        let repo = Repository::new(&conn);
+        let subs = vec![
+            SubtaskInput { title: "Sub A".to_string(), effort_minutes: 60, priority: 1 },
+            SubtaskInput { title: "Sub B".to_string(), effort_minutes: 60, priority: 2 },
+        ];
+        let created = repo.split_into_subtasks("t1", &subs).unwrap();
+        assert_eq!(created.len(), 2);
+        let status: String = conn.query_row("SELECT status FROM tasks WHERE id='t1'", [], |r| r.get(0)).unwrap();
+        assert_eq!(status, "completed");
     }
 }
