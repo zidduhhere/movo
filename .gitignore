@@ -24,3 +24,5 @@ dist-ssr
 *.sw?
 src-tauri/.env
 .env
+Movo_Product_Description.docx
+.claude/
