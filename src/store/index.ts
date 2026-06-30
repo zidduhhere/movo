@@ -91,6 +91,16 @@ export interface MissedSession {
     goal_title: string;
 }
 
+export interface GlobalChatResponse {
+    message: ChatMessage;
+    created_goal_ids: string[];
+}
+
+export interface TaskChatResponse {
+    message: string;
+    task_updated: boolean;
+}
+
 interface AppState {
     user: User | null;
     goals: Goal[];
@@ -113,6 +123,9 @@ interface AppState {
     goalStats: Record<string, GoalStat>;
     missedSessions: MissedSession[];
     focusTaskId: string | null;
+    globalMessages: ChatMessage[];
+    taskMessages: Record<string, ChatMessage[]>;
+    activeChatTaskId: string | null;
 
     login: (email: string, password: string) => Promise<void>;
     register: (email: string, name: string, password: string) => Promise<void>;
@@ -142,6 +155,10 @@ interface AppState {
     fetchMissedSessions: () => Promise<void>;
     dismissMissedSession: (taskId: string) => void;
     setFocusTask: (id: string | null) => void;
+    fetchGlobalMessages: () => Promise<void>;
+    sendGlobalMessage: (content: string) => Promise<void>;
+    sendTaskMessage: (taskId: string, content: string) => Promise<void>;
+    setActiveChatTaskId: (id: string | null) => void;
 }
 
 export const useStore = create<AppState>((set, _get) => ({
@@ -166,6 +183,9 @@ export const useStore = create<AppState>((set, _get) => ({
     goalStats: {},
     missedSessions: [],
     focusTaskId: null,
+    globalMessages: [],
+    taskMessages: {},
+    activeChatTaskId: null,
 
     login: async (email, password) => {
         set({ isLoading: true, error: null });
@@ -174,6 +194,7 @@ export const useStore = create<AppState>((set, _get) => ({
             set({ user, isLoading: false });
             _get().fetchGoals();
             _get().fetchPreferences();
+            _get().fetchGlobalMessages();
         } catch (error: any) {
             set({ error: error.toString(), isLoading: false });
             throw error;
@@ -187,6 +208,7 @@ export const useStore = create<AppState>((set, _get) => ({
             set({ user, isLoading: false });
             _get().fetchGoals();
             _get().fetchPreferences();
+            _get().fetchGlobalMessages();
         } catch (error: any) {
             set({ error: error.toString(), isLoading: false });
             throw error;
@@ -417,4 +439,95 @@ export const useStore = create<AppState>((set, _get) => ({
     },
 
     setFocusTask: (id) => set({ focusTaskId: id }),
+
+    fetchGlobalMessages: async () => {
+        try {
+            const messages = await invoke<ChatMessage[]>('get_global_chat_history');
+            set({ globalMessages: messages });
+        } catch { /* silent */ }
+    },
+
+    sendGlobalMessage: async (content) => {
+        const tempMsg: ChatMessage = {
+            id: 'temp-' + Date.now(),
+            goal_id: 'global',
+            role: 'user',
+            content,
+            created_at: new Date().toISOString(),
+        };
+        set(state => ({ globalMessages: [...state.globalMessages, tempMsg], isLoading: true }));
+        try {
+            const response = await invoke<GlobalChatResponse>('global_chat', { content });
+            set(state => ({
+                globalMessages: [
+                    ...state.globalMessages.filter(m => m.id !== tempMsg.id),
+                    { ...tempMsg, id: 'user-' + Date.now() },
+                    response.message,
+                ],
+                isLoading: false,
+            }));
+            if (response.created_goal_ids.length > 0) {
+                useStore.getState().fetchGoals();
+            }
+        } catch (error: any) {
+            set(state => ({
+                globalMessages: state.globalMessages.filter(m => m.id !== tempMsg.id),
+                isLoading: false,
+                error: error.toString(),
+            }));
+        }
+    },
+
+    sendTaskMessage: async (taskId, content) => {
+        const currentHistory = useStore.getState().taskMessages[taskId] ?? [];
+        const tempMsg: ChatMessage = {
+            id: 'temp-' + Date.now(),
+            goal_id: taskId,
+            role: 'user',
+            content,
+            created_at: new Date().toISOString(),
+        };
+        set(state => ({
+            taskMessages: { ...state.taskMessages, [taskId]: [...(state.taskMessages[taskId] ?? []), tempMsg] },
+            isLoading: true,
+        }));
+        try {
+            const history = currentHistory.map(m => ({ role: m.role as string, content: m.content }));
+            const response = await invoke<TaskChatResponse>('task_chat', { taskId, content, history });
+            const aiMsg: ChatMessage = {
+                id: 'ai-' + Date.now(),
+                goal_id: taskId,
+                role: 'assistant',
+                content: response.message,
+                created_at: new Date().toISOString(),
+            };
+            const confirmedUserMsg: ChatMessage = { ...tempMsg, id: 'user-' + Date.now() };
+            set(state => ({
+                taskMessages: {
+                    ...state.taskMessages,
+                    [taskId]: [
+                        ...(state.taskMessages[taskId] ?? []).filter(m => m.id !== tempMsg.id),
+                        confirmedUserMsg,
+                        aiMsg,
+                    ],
+                },
+                isLoading: false,
+            }));
+            if (response.task_updated) {
+                const { activeGoalId } = useStore.getState();
+                if (activeGoalId) useStore.getState().fetchTasksForGoal(activeGoalId);
+                useStore.getState().fetchNextAction();
+            }
+        } catch {
+            set(state => ({
+                taskMessages: {
+                    ...state.taskMessages,
+                    [taskId]: (state.taskMessages[taskId] ?? []).filter(m => m.id !== tempMsg.id),
+                },
+                isLoading: false,
+            }));
+        }
+    },
+
+    setActiveChatTaskId: (id) => set({ activeChatTaskId: id }),
 }));
