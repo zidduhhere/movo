@@ -55,8 +55,8 @@ pub async fn task_chat(
         events.iter().map(|e| {
             let label = e.goal_title.as_deref().map(|g| format!(" [{}]", g)).unwrap_or_default();
             format!("  • {} – {}: {}{}",
-                e.start_time.get(..10).unwrap_or(&e.start_time),
-                e.end_time.get(..10).unwrap_or(&e.end_time),
+                e.start_time.get(..16).unwrap_or(&e.start_time),
+                e.end_time.get(..16).unwrap_or(&e.end_time),
                 e.title, label)
         }).collect::<Vec<_>>().join("\n")
     };
@@ -135,8 +135,9 @@ pub async fn task_chat(
                     }
                 }
                 "complete_task" => {
-                    let _ = repo.update_task_status(&task_id, "completed");
-                    task_updated = true;
+                    if repo.update_task_status(&task_id, "completed").is_ok() {
+                        task_updated = true;
+                    }
                 }
                 "split_task" => {
                     if let Some(arr) = call.arguments["subtasks"].as_array() {
@@ -144,8 +145,9 @@ pub async fn task_chat(
                             .filter_map(|v| serde_json::from_value(v.clone()).ok())
                             .collect();
                         if !subtasks.is_empty() {
-                            let _ = repo.split_into_subtasks(&task_id, &subtasks);
-                            task_updated = true;
+                            if repo.split_into_subtasks(&task_id, &subtasks).is_ok() {
+                                task_updated = true;
+                            }
                         }
                     }
                 }
