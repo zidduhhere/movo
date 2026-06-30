@@ -18,7 +18,7 @@ import { InteractiveQuestion } from './InteractiveQuestion';
 import { parseAIMessage } from '../utils/messageParser';
 
 // ── Prose class shared across markdown blocks ─────────────────────────────────
-const PROSE = 'prose prose-sm max-w-none text-[#1C1C1E] prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-li:my-0.5 prose-a:text-[#85D24E]';
+const PROSE = 'prose prose-sm max-w-none text-[#1C1C1E] prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-li:my-0.5 prose-a:text-[#4D5AE8]';
 
 // ── Message renderer: detects interactive_question JSON and renders it as UI ──
 
@@ -74,7 +74,7 @@ function TaskPanel({ onClose }: { onClose: () => void }) {
                 {done.length > 0 && <p className="text-[10px] font-semibold uppercase tracking-wider text-black/30 px-1 pt-2">Completed</p>}
                 {done.map(t => (
                     <div key={t.id} className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl bg-black/3 opacity-60">
-                        <CheckSquare2 className="w-3.5 h-3.5 text-[#85D24E] mt-0.5 shrink-0" />
+                        <CheckSquare2 className="w-3.5 h-3.5 text-[#4D5AE8] mt-0.5 shrink-0" />
                         <p className="text-[12px] text-black/50 line-through leading-snug truncate">{t.title}</p>
                     </div>
                 ))}
@@ -167,8 +167,8 @@ export function GoalChatView() {
                         <div>
                             <h1 className="text-[14px] font-semibold text-[#1C1C1E] leading-tight truncate max-w-[300px]">{goal?.title ?? 'Project'}</h1>
                             {isTyping
-                                ? <p className="text-[11px] text-[#85D24E] flex items-center gap-1">
-                                    <span className="inline-block w-1.5 h-1.5 bg-[#85D24E] rounded-full animate-pulse" />
+                                ? <p className="text-[11px] text-[#4D5AE8] flex items-center gap-1">
+                                    <span className="inline-block w-1.5 h-1.5 bg-[#4D5AE8] rounded-full animate-pulse" />
                                     Thinking…
                                   </p>
                                 : <p className="text-[11px] text-black/40">Chief of Staff</p>
@@ -176,7 +176,7 @@ export function GoalChatView() {
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
-                        <button onClick={() => setActiveView('new_project')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#85D24E] hover:bg-[#7bc248] text-black text-[12px] font-semibold shadow-sm transition-colors">
+                        <button onClick={() => setActiveView('new_project')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#4D5AE8] hover:bg-[#4048C9] text-white text-[12px] font-semibold shadow-sm transition-colors">
                             <Plus className="w-3.5 h-3.5" />New Goal
                         </button>
                         <button
@@ -184,7 +184,7 @@ export function GoalChatView() {
                             className={clsx('flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium border transition-colors', showTasks ? 'bg-[#1C1C1E] text-white border-transparent' : 'bg-white border-black/10 text-black/70 hover:bg-black/5')}
                         >
                             <ListTodo className="w-3.5 h-3.5" />
-                            Tasks{taskCount > 0 && <span className={clsx('ml-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full', showTasks ? 'bg-white/20 text-white' : 'bg-[#85D24E]/20 text-[#5a9c35]')}>{taskCount}</span>}
+                            Tasks{taskCount > 0 && <span className={clsx('ml-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full', showTasks ? 'bg-white/20 text-white' : 'bg-[#4D5AE8]/20 text-[#3B44A8]')}>{taskCount}</span>}
                         </button>
                         <SettingsDropdown />
                     </div>
@@ -210,8 +210,8 @@ export function GoalChatView() {
 
                         {messages.length === 0 && !isTyping && !isLoadingMessages && (
                             <div className="flex flex-col items-center justify-center py-20 text-center gap-4">
-                                <div className="w-14 h-14 rounded-full bg-[#85D24E]/10 border border-[#85D24E]/30 flex items-center justify-center">
-                                    <Bot className="w-7 h-7 text-[#85D24E]" />
+                                <div className="w-14 h-14 rounded-full bg-[#4D5AE8]/10 border border-[#4D5AE8]/30 flex items-center justify-center">
+                                    <Bot className="w-7 h-7 text-[#4D5AE8]" />
                                 </div>
                                 <div>
                                     <p className="text-[15px] font-semibold text-[#1C1C1E]">Chief of Staff ready</p>
@@ -239,8 +239,8 @@ export function GoalChatView() {
 
                         {messages.map((msg) => (
                             <div key={msg.id} className={clsx('flex gap-3', msg.role === 'user' ? 'flex-row-reverse' : 'flex-row')}>
-                                <div className={clsx('w-8 h-8 rounded-full shrink-0 flex items-center justify-center mt-0.5', msg.role === 'user' ? 'bg-[#1C1C1E] text-white' : 'bg-[#85D24E]/10 border border-[#85D24E]/30')}>
-                                    {msg.role === 'user' ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4 text-[#85D24E]" />}
+                                <div className={clsx('w-8 h-8 rounded-full shrink-0 flex items-center justify-center mt-0.5', msg.role === 'user' ? 'bg-[#1C1C1E] text-white' : 'bg-[#4D5AE8]/10 border border-[#4D5AE8]/30')}>
+                                    {msg.role === 'user' ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4 text-[#4D5AE8]" />}
                                 </div>
                                 <div className={clsx(
                                     'rounded-2xl px-4 py-3 text-[14px] leading-relaxed',
@@ -258,8 +258,8 @@ export function GoalChatView() {
 
                         {isTyping && (
                             <div className="flex gap-3">
-                                <div className="w-8 h-8 rounded-full shrink-0 flex items-center justify-center bg-[#85D24E]/10 border border-[#85D24E]/30">
-                                    <Bot className="w-4 h-4 text-[#85D24E]" />
+                                <div className="w-8 h-8 rounded-full shrink-0 flex items-center justify-center bg-[#4D5AE8]/10 border border-[#4D5AE8]/30">
+                                    <Bot className="w-4 h-4 text-[#4D5AE8]" />
                                 </div>
                                 <div className="bg-white border border-black/8 rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm">
                                     <div className="flex items-center gap-1.5">
@@ -277,7 +277,7 @@ export function GoalChatView() {
                 {/* Input Bar */}
                 <div className="shrink-0 px-6 py-4 border-t border-black/8 bg-white/80 backdrop-blur-sm">
                     <div className="max-w-[720px] mx-auto">
-                        <motion.div layoutId="chat-input-bar" className="flex items-end gap-3 bg-white border border-black/12 rounded-2xl px-4 py-3 shadow-[0_8px_30px_rgba(0,0,0,0.06)] focus-within:border-[#85D24E] focus-within:ring-2 focus-within:ring-[#85D24E]/20 transition-all">
+                        <motion.div layoutId="chat-input-bar" className="flex items-end gap-3 bg-white border border-black/12 rounded-2xl px-4 py-3 shadow-[0_8px_30px_rgba(0,0,0,0.06)] focus-within:border-[#4D5AE8] focus-within:ring-2 focus-within:ring-[#4D5AE8]/20 transition-all">
                             <button type="button" className="shrink-0 p-1.5 rounded-full hover:bg-black/5 text-black/40 hover:text-[#1C1C1E] transition-colors mb-0.5">
                                 <Paperclip className="w-5 h-5" />
                             </button>
@@ -303,7 +303,7 @@ export function GoalChatView() {
                                     className={clsx(
                                         'shrink-0 p-1.5 rounded-full transition-colors mb-0.5',
                                         isListening
-                                            ? 'text-[#85D24E] bg-[#85D24E]/10 animate-pulse'
+                                            ? 'text-[#4D5AE8] bg-[#4D5AE8]/10 animate-pulse'
                                             : 'text-black/40 hover:text-[#1C1C1E] hover:bg-black/5'
                                     )}
                                     title={isListening ? 'Stop listening' : 'Voice input'}

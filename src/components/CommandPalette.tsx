@@ -61,9 +61,9 @@ export function CommandPalette({ onClose }: CommandPaletteProps) {
                         <button
                             key={cmd.id}
                             onClick={() => execute(cmd.id)}
-                            className={`w-full flex items-center gap-3 px-5 py-3 text-left transition-colors ${i === selected ? 'bg-[#85D24E]/10' : 'hover:bg-black/4'}`}
+                            className={`w-full flex items-center gap-3 px-5 py-3 text-left transition-colors ${i === selected ? 'bg-[#4D5AE8]/10' : 'hover:bg-black/4'}`}
                         >
-                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${i === selected ? 'bg-[#85D24E] text-white' : 'bg-black/6 text-black/50'}`}>
+                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${i === selected ? 'bg-[#4D5AE8] text-white' : 'bg-black/6 text-black/50'}`}>
                                 {cmd.icon}
                             </div>
                             <div>

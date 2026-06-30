@@ -26,7 +26,7 @@ export function GoalCapture() {
 
     return (
         <form onSubmit={handleSubmit} className="w-full flex justify-center">
-            <div className="flex items-center gap-2 w-full max-w-[400px] bg-black/5 border border-black/10 rounded-[8px] px-3 py-1.5 shadow-[inset_0_1px_2px_rgba(0,0,0,0.04)] focus-within:ring-2 focus-within:ring-[#85D24E]/20 focus-within:border-[#85D24E] transition-all">
+            <div className="flex items-center gap-2 w-full max-w-[400px] bg-black/5 border border-black/10 rounded-[8px] px-3 py-1.5 shadow-[inset_0_1px_2px_rgba(0,0,0,0.04)] focus-within:ring-2 focus-within:ring-[#4D5AE8]/20 focus-within:border-[#4D5AE8] transition-all">
                 {isPlanning ? (
                     <Loader2 className="w-3.5 h-3.5 text-black/50 animate-spin" />
                 ) : (

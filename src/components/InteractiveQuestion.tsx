@@ -72,12 +72,12 @@ export function InteractiveQuestion({ question, options, prefix, onSelect }: Pro
                                         if (e.key === 'Escape') { setExpandedOther(null); setOtherText(''); } 
                                     }}
                                     placeholder="Please describe..."
-                                    className="flex-1 px-4 py-3 rounded-xl border border-[#85D24E]/50 bg-white text-[14px] text-[#1C1C1E] outline-none focus:border-[#85D24E] focus:ring-4 focus:ring-[#85D24E]/10 transition-all placeholder-black/30 shadow-sm"
+                                    className="flex-1 px-4 py-3 rounded-xl border border-[#4D5AE8]/50 bg-white text-[14px] text-[#1C1C1E] outline-none focus:border-[#4D5AE8] focus:ring-4 focus:ring-[#4D5AE8]/10 transition-all placeholder-black/30 shadow-sm"
                                 />
                                 <button
                                     onClick={submitOther}
                                     disabled={!otherText.trim()}
-                                    className="w-11 h-11 flex items-center justify-center shrink-0 rounded-xl bg-[#85D24E] hover:bg-[#7bc248] disabled:opacity-40 disabled:hover:bg-[#85D24E] transition-colors shadow-sm"
+                                    className="w-11 h-11 flex items-center justify-center shrink-0 rounded-xl bg-[#4D5AE8] hover:bg-[#4048C9] disabled:opacity-40 disabled:hover:bg-[#4D5AE8] transition-colors shadow-sm"
                                 >
                                     <Send className="w-4 h-4 text-white ml-0.5" />
                                 </button>
@@ -91,14 +91,14 @@ export function InteractiveQuestion({ question, options, prefix, onSelect }: Pro
                             onClick={() => handleOptionClick(opt)}
                             className={clsx(
                                 "group relative w-full text-left px-4 py-3.5 rounded-xl border transition-all duration-200 ease-out overflow-hidden flex items-center justify-between",
-                                "bg-white border-black/8 hover:border-[#85D24E]/60 hover:bg-[#85D24E]/[0.03] hover:shadow-sm"
+                                "bg-white border-black/8 hover:border-[#4D5AE8]/60 hover:bg-[#4D5AE8]/[0.03] hover:shadow-sm"
                             )}
                         >
                             <span className="relative z-10 text-[14px] text-[#1C1C1E]/80 font-medium group-hover:text-[#1C1C1E] group-hover:translate-x-0.5 transition-transform duration-200">
                                 {opt}
                             </span>
                             
-                            <ArrowRight className="w-4 h-4 text-[#85D24E] opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />
+                            <ArrowRight className="w-4 h-4 text-[#4D5AE8] opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />
                         </button>
                     );
                 })}

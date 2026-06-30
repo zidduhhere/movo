@@ -68,14 +68,14 @@ export function ProjectChat({ children }: { children?: ReactNode }) {
 
                             return (
                                 <div key={msg.id} className={clsx('flex flex-col self-start', isInteractive ? 'w-full max-w-[600px]' : 'max-w-[85%] items-start')}>
-                                    <div className="flex items-center gap-2 mb-2 text-[#85D24E]">
+                                    <div className="flex items-center gap-2 mb-2 text-[#4D5AE8]">
                                         <Bot className="w-4 h-4" />
                                         <span className="font-semibold text-xs text-gray-500 uppercase tracking-wider">Chief of Staff</span>
                                     </div>
                                     <div className={clsx(
                                         'rounded-2xl px-5 py-4 text-[15px] leading-relaxed w-full',
                                         'bg-white text-gray-800 rounded-bl-sm border border-gray-200 shadow-sm',
-                                        !isInteractive && 'prose prose-sm max-w-none prose-p:my-1 prose-a:text-[#85D24E]'
+                                        !isInteractive && 'prose prose-sm max-w-none prose-p:my-1 prose-a:text-[#4D5AE8]'
                                     )}>
                                         {isInteractive ? (
                                             <InteractiveQuestion
@@ -105,7 +105,7 @@ export function ProjectChat({ children }: { children?: ReactNode }) {
 
                     {isTyping && (
                         <div className="flex flex-col self-start max-w-[85%]">
-                            <div className="flex items-center gap-2 mb-2 text-[#85D24E]">
+                            <div className="flex items-center gap-2 mb-2 text-[#4D5AE8]">
                                 <Bot className="w-4 h-4" />
                                 <span className="font-semibold text-xs text-gray-500 uppercase tracking-wider">Chief of Staff</span>
                             </div>
@@ -124,7 +124,7 @@ export function ProjectChat({ children }: { children?: ReactNode }) {
             <div className="absolute bottom-0 left-0 right-0 p-8 pt-4 bg-gradient-to-t from-[#FAFAFA] via-[#FAFAFA]/90 to-transparent flex justify-center pointer-events-none">
                 <motion.div
                     layoutId="chat-input-bar"
-                    className="relative flex items-center gap-3 w-full max-w-[700px] bg-white border border-[#E5E5EA] rounded-full px-5 py-3.5 shadow-[0_8px_30px_rgba(0,0,0,0.06)] focus-within:border-[#85D24E] focus-within:ring-2 focus-within:ring-[#85D24E]/20 transition-all pointer-events-auto"
+                    className="relative flex items-center gap-3 w-full max-w-[700px] bg-white border border-[#E5E5EA] rounded-full px-5 py-3.5 shadow-[0_8px_30px_rgba(0,0,0,0.06)] focus-within:border-[#4D5AE8] focus-within:ring-2 focus-within:ring-[#4D5AE8]/20 transition-all pointer-events-auto"
                 >
                     <button type="button" className="p-1.5 rounded-full hover:bg-black/5 text-[#8E8E93] hover:text-[#1C1C1E] transition-colors focus:outline-none">
                         <Paperclip className="w-5 h-5" />
@@ -144,7 +144,7 @@ export function ProjectChat({ children }: { children?: ReactNode }) {
                         <button
                             onClick={handleSend}
                             disabled={isTyping}
-                            className="p-1.5 bg-[#85D24E] text-white rounded-full hover:bg-[#7bc248] disabled:opacity-50 transition-colors shadow-sm focus:outline-none"
+                            className="p-1.5 bg-[#4D5AE8] text-white rounded-full hover:bg-[#4048C9] disabled:opacity-50 transition-colors shadow-sm focus:outline-none"
                         >
                             <Send className="w-4 h-4 ml-0.5" />
                         </button>

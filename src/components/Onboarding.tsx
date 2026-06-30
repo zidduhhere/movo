@@ -49,7 +49,7 @@ export function Onboarding() {
                             key={s}
                             className={clsx(
                                 'w-2 h-2 rounded-full transition-colors',
-                                s === step ? 'bg-[#85D24E]' : s < step ? 'bg-[#85D24E]/50' : 'bg-black/10'
+                                s === step ? 'bg-[#4D5AE8]' : s < step ? 'bg-[#4D5AE8]/50' : 'bg-black/10'
                             )}
                         />
                     ))}
@@ -68,7 +68,7 @@ export function Onboarding() {
                                     type="time"
                                     value={workStart}
                                     onChange={(e) => setWorkStart(e.target.value)}
-                                    className="px-3 py-2 rounded-xl border border-black/10 bg-white text-[14px] text-[#1C1C1E] outline-none focus:border-[#85D24E] focus:ring-2 focus:ring-[#85D24E]/20"
+                                    className="px-3 py-2 rounded-xl border border-black/10 bg-white text-[14px] text-[#1C1C1E] outline-none focus:border-[#4D5AE8] focus:ring-2 focus:ring-[#4D5AE8]/20"
                                 />
                             </div>
                             <span className="text-black/30 mt-5">→</span>
@@ -78,13 +78,13 @@ export function Onboarding() {
                                     type="time"
                                     value={workEnd}
                                     onChange={(e) => setWorkEnd(e.target.value)}
-                                    className="px-3 py-2 rounded-xl border border-black/10 bg-white text-[14px] text-[#1C1C1E] outline-none focus:border-[#85D24E] focus:ring-2 focus:ring-[#85D24E]/20"
+                                    className="px-3 py-2 rounded-xl border border-black/10 bg-white text-[14px] text-[#1C1C1E] outline-none focus:border-[#4D5AE8] focus:ring-2 focus:ring-[#4D5AE8]/20"
                                 />
                             </div>
                         </div>
                         <button
                             onClick={() => setStep(2)}
-                            className="mt-4 py-3 bg-[#85D24E] text-white font-semibold rounded-xl hover:bg-[#7bc248] transition-colors"
+                            className="mt-4 py-3 bg-[#4D5AE8] text-white font-semibold rounded-xl hover:bg-[#4048C9] transition-colors"
                         >
                             Continue
                         </button>
@@ -105,8 +105,8 @@ export function Onboarding() {
                                     className={clsx(
                                         'px-5 py-2.5 rounded-xl text-[14px] font-medium border transition-colors',
                                         focusBlock === mins
-                                            ? 'bg-[#85D24E] text-white border-[#85D24E]'
-                                            : 'bg-white text-black/70 border-black/10 hover:border-[#85D24E]/50'
+                                            ? 'bg-[#4D5AE8] text-white border-[#4D5AE8]'
+                                            : 'bg-white text-black/70 border-black/10 hover:border-[#4D5AE8]/50'
                                     )}
                                 >
                                     {mins < 60 ? `${mins} min` : `${mins / 60} hr${mins > 60 ? 's' : ''}`}
@@ -122,7 +122,7 @@ export function Onboarding() {
                             </button>
                             <button
                                 onClick={() => setStep(3)}
-                                className="flex-1 py-3 bg-[#85D24E] text-white font-semibold rounded-xl hover:bg-[#7bc248] transition-colors"
+                                className="flex-1 py-3 bg-[#4D5AE8] text-white font-semibold rounded-xl hover:bg-[#4048C9] transition-colors"
                             >
                                 Continue
                             </button>
@@ -144,8 +144,8 @@ export function Onboarding() {
                                     className={clsx(
                                         'px-4 py-2 rounded-xl text-[13px] font-medium border transition-colors',
                                         daysOff.includes(day)
-                                            ? 'bg-[#85D24E] text-white border-[#85D24E]'
-                                            : 'bg-white text-black/70 border-black/10 hover:border-[#85D24E]/50'
+                                            ? 'bg-[#4D5AE8] text-white border-[#4D5AE8]'
+                                            : 'bg-white text-black/70 border-black/10 hover:border-[#4D5AE8]/50'
                                     )}
                                 >
                                     {day.slice(0, 3)}
@@ -161,7 +161,7 @@ export function Onboarding() {
                             </button>
                             <button
                                 onClick={handleFinish}
-                                className="flex-1 py-3 bg-[#85D24E] text-white font-semibold rounded-xl hover:bg-[#7bc248] transition-colors"
+                                className="flex-1 py-3 bg-[#4D5AE8] text-white font-semibold rounded-xl hover:bg-[#4048C9] transition-colors"
                             >
                                 Let's go →
                             </button>

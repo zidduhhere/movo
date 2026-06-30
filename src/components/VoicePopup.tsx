@@ -149,7 +149,7 @@ export function VoicePopup() {
                 {micError ? (
                     <MicOff className="w-5 h-5 text-red-400" />
                 ) : isListening ? (
-                    <Mic className="w-5 h-5 text-[#85D24E] animate-pulse" />
+                    <Mic className="w-5 h-5 text-[#4D5AE8] animate-pulse" />
                 ) : (
                     <Mic className="w-5 h-5 text-gray-400" />
                 )}
@@ -162,7 +162,7 @@ export function VoicePopup() {
                         <span className="text-[12px] text-red-500">{micError}</span>
                         <button
                             onClick={handleOpenSettings}
-                            className="text-[11px] text-[#85D24E] underline text-left"
+                            className="text-[11px] text-[#4D5AE8] underline text-left"
                         >
                             Open Microphone Settings →
                         </button>
@@ -185,7 +185,7 @@ export function VoicePopup() {
                     {[0, 1, 2, 3, 4].map((i) => (
                         <div
                             key={i}
-                            className="w-[3px] bg-[#85D24E] rounded-full animate-bounce"
+                            className="w-[3px] bg-[#4D5AE8] rounded-full animate-bounce"
                             style={{
                                 height: `${8 + (i % 3) * 4}px`,
                                 animationDelay: `${i * 0.1}s`,
@@ -200,7 +200,7 @@ export function VoicePopup() {
             <button
                 onClick={handlePlan}
                 disabled={!transcript.trim() || isPlanning}
-                className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-[#85D24E] text-white text-[13px] font-medium rounded-xl hover:bg-[#7bc248] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-[#4D5AE8] text-white text-[13px] font-medium rounded-xl hover:bg-[#4048C9] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
                 {isPlanning ? (
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />

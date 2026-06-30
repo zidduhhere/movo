@@ -9,7 +9,7 @@ import { useStore, CalendarEvent } from '../store';
 import clsx from 'clsx';
 
 const GOAL_COLORS = [
-    'bg-[#85D24E]/80 border-[#85D24E]',
+    'bg-[#4D5AE8]/80 border-[#4D5AE8]',
     'bg-blue-400/80 border-blue-500',
     'bg-purple-400/80 border-purple-500',
     'bg-orange-400/80 border-orange-500',
@@ -86,12 +86,12 @@ export function CalendarView() {
                         <button
                             onClick={() => setViewMode('week')}
                             className={clsx('px-4 py-1.5 text-[13px] font-medium transition-colors',
-                                viewMode === 'week' ? 'bg-[#85D24E] text-white' : 'bg-white text-black/60 hover:bg-black/5')}
+                                viewMode === 'week' ? 'bg-[#4D5AE8] text-white' : 'bg-white text-black/60 hover:bg-black/5')}
                         >Week</button>
                         <button
                             onClick={() => setViewMode('month')}
                             className={clsx('px-4 py-1.5 text-[13px] font-medium transition-colors',
-                                viewMode === 'month' ? 'bg-[#85D24E] text-white' : 'bg-white text-black/60 hover:bg-black/5')}
+                                viewMode === 'month' ? 'bg-[#4D5AE8] text-white' : 'bg-white text-black/60 hover:bg-black/5')}
                         >Month</button>
                     </div>
                     <div className="flex items-center gap-1">
@@ -201,7 +201,7 @@ function EventCreatePopover({
                         if (e.key === 'Escape') onClose();
                     }}
                     placeholder="Event title"
-                    className="w-full text-[15px] font-medium text-[#1C1C1E] placeholder-black/30 bg-[#F5F5F7] rounded-xl px-3 py-2 outline-none border border-transparent focus:border-[#85D24E] focus:ring-2 focus:ring-[#85D24E]/20 transition-all"
+                    className="w-full text-[15px] font-medium text-[#1C1C1E] placeholder-black/30 bg-[#F5F5F7] rounded-xl px-3 py-2 outline-none border border-transparent focus:border-[#4D5AE8] focus:ring-2 focus:ring-[#4D5AE8]/20 transition-all"
                 />
             </div>
 
@@ -215,14 +215,14 @@ function EventCreatePopover({
                         type="time"
                         value={toTimeValue(startH, startM)}
                         onChange={(e) => { const [h, m] = fromTimeValue(e.target.value); setStartH(h); setStartM(m); }}
-                        className="text-[13px] text-[#1C1C1E] bg-[#F5F5F7] rounded-lg px-2 py-1.5 outline-none border border-transparent focus:border-[#85D24E] transition-colors"
+                        className="text-[13px] text-[#1C1C1E] bg-[#F5F5F7] rounded-lg px-2 py-1.5 outline-none border border-transparent focus:border-[#4D5AE8] transition-colors"
                     />
                     <span className="text-black/30 text-[13px]">→</span>
                     <input
                         type="time"
                         value={toTimeValue(endH, endM)}
                         onChange={(e) => { const [h, m] = fromTimeValue(e.target.value); setEndH(h); setEndM(m); }}
-                        className="text-[13px] text-[#1C1C1E] bg-[#F5F5F7] rounded-lg px-2 py-1.5 outline-none border border-transparent focus:border-[#85D24E] transition-colors"
+                        className="text-[13px] text-[#1C1C1E] bg-[#F5F5F7] rounded-lg px-2 py-1.5 outline-none border border-transparent focus:border-[#4D5AE8] transition-colors"
                     />
                 </div>
             </div>
@@ -238,7 +238,7 @@ function EventCreatePopover({
                 <button
                     onClick={handleSubmit}
                     disabled={!title.trim()}
-                    className="flex-1 py-2 bg-[#85D24E] hover:bg-[#7bc248] disabled:opacity-40 text-white text-[13px] font-semibold rounded-xl transition-colors"
+                    className="flex-1 py-2 bg-[#4D5AE8] hover:bg-[#4048C9] disabled:opacity-40 text-white text-[13px] font-semibold rounded-xl transition-colors"
                 >
                     Add Event
                 </button>
@@ -286,7 +286,7 @@ function WeekView({
                             <div className="h-10 flex flex-col items-center justify-center border-b border-black/5">
                                 <span className="text-[11px] text-black/40 uppercase tracking-wide">{format(day, 'EEE')}</span>
                                 <span className={clsx('text-[13px] font-semibold',
-                                    isSameDay(day, new Date()) ? 'text-[#85D24E]' : 'text-[#1C1C1E]')}>
+                                    isSameDay(day, new Date()) ? 'text-[#4D5AE8]' : 'text-[#1C1C1E]')}>
                                     {format(day, 'd')}
                                 </span>
                             </div>
@@ -406,12 +406,12 @@ function MonthView({
                                         }}
                                         className={clsx(
                                             'p-1.5 border-r border-black/5 last:border-r-0 min-h-[80px] transition-colors',
-                                            isCurrentMonth ? 'cursor-pointer hover:bg-[#85D24E]/5' : 'opacity-30 cursor-default'
+                                            isCurrentMonth ? 'cursor-pointer hover:bg-[#4D5AE8]/5' : 'opacity-30 cursor-default'
                                         )}
                                     >
                                         <span className={clsx(
                                             'text-[12px] font-medium inline-flex items-center justify-center w-6 h-6 rounded-full',
-                                            isSameDay(day, new Date()) ? 'bg-[#85D24E] text-white' : 'text-[#1C1C1E]'
+                                            isSameDay(day, new Date()) ? 'bg-[#4D5AE8] text-white' : 'text-[#1C1C1E]'
                                         )}>
                                             {format(day, 'd')}
                                         </span>

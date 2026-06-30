@@ -5,7 +5,7 @@ import clsx from 'clsx';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
-const PROSE = 'prose prose-sm max-w-none text-[#1C1C1E] prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-li:my-0.5 prose-a:text-[#85D24E]';
+const PROSE = 'prose prose-sm max-w-none text-[#1C1C1E] prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-li:my-0.5 prose-a:text-[#4D5AE8]';
 
 interface Props {
     taskId: string;
@@ -58,8 +58,8 @@ export function TaskChatPanel({ taskId, taskTitle, onClose }: Props) {
                 <div className="flex flex-col gap-4">
                     {messages.length === 0 && !isLoading && (
                         <div className="flex flex-col items-center justify-center py-10 text-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-[#85D24E]/10 border border-[#85D24E]/30 flex items-center justify-center">
-                                <Bot className="w-5 h-5 text-[#85D24E]" />
+                            <div className="w-10 h-10 rounded-full bg-[#4D5AE8]/10 border border-[#4D5AE8]/30 flex items-center justify-center">
+                                <Bot className="w-5 h-5 text-[#4D5AE8]" />
                             </div>
                             <p className="text-[12px] text-black/40">Ask me anything about this task — reschedule, split it, or mark it done.</p>
                         </div>
@@ -67,8 +67,8 @@ export function TaskChatPanel({ taskId, taskTitle, onClose }: Props) {
 
                     {messages.map((msg) => (
                         <div key={msg.id} className={clsx('flex gap-2', msg.role === 'user' ? 'flex-row-reverse' : 'flex-row')}>
-                            <div className={clsx('w-6 h-6 rounded-full shrink-0 flex items-center justify-center mt-0.5', msg.role === 'user' ? 'bg-[#1C1C1E] text-white' : 'bg-[#85D24E]/10 border border-[#85D24E]/30')}>
-                                {msg.role === 'user' ? <User className="w-3 h-3" /> : <Bot className="w-3 h-3 text-[#85D24E]" />}
+                            <div className={clsx('w-6 h-6 rounded-full shrink-0 flex items-center justify-center mt-0.5', msg.role === 'user' ? 'bg-[#1C1C1E] text-white' : 'bg-[#4D5AE8]/10 border border-[#4D5AE8]/30')}>
+                                {msg.role === 'user' ? <User className="w-3 h-3" /> : <Bot className="w-3 h-3 text-[#4D5AE8]" />}
                             </div>
                             <div className={clsx(
                                 'rounded-xl px-3 py-2 text-[13px] leading-relaxed',
@@ -86,8 +86,8 @@ export function TaskChatPanel({ taskId, taskTitle, onClose }: Props) {
 
                     {isLoading && (
                         <div className="flex gap-2">
-                            <div className="w-6 h-6 rounded-full shrink-0 flex items-center justify-center bg-[#85D24E]/10 border border-[#85D24E]/30">
-                                <Bot className="w-3 h-3 text-[#85D24E]" />
+                            <div className="w-6 h-6 rounded-full shrink-0 flex items-center justify-center bg-[#4D5AE8]/10 border border-[#4D5AE8]/30">
+                                <Bot className="w-3 h-3 text-[#4D5AE8]" />
                             </div>
                             <div className="bg-white border border-black/8 rounded-xl rounded-tl-sm px-3 py-2 shadow-sm">
                                 <div className="flex items-center gap-1">
@@ -104,7 +104,7 @@ export function TaskChatPanel({ taskId, taskTitle, onClose }: Props) {
 
             {/* Input */}
             <div className="shrink-0 px-3 py-3 border-t border-black/8">
-                <div className="flex items-end gap-2 bg-white border border-black/12 rounded-xl px-3 py-2 shadow-sm focus-within:border-[#85D24E] focus-within:ring-1 focus-within:ring-[#85D24E]/20 transition-all">
+                <div className="flex items-end gap-2 bg-white border border-black/12 rounded-xl px-3 py-2 shadow-sm focus-within:border-[#4D5AE8] focus-within:ring-1 focus-within:ring-[#4D5AE8]/20 transition-all">
                     <textarea
                         ref={textareaRef}
                         value={input}

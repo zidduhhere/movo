@@ -63,7 +63,7 @@ export function FocusSession() {
 
                 {/* Label */}
                 <div className="text-center">
-                    <p className="text-[11px] font-semibold text-[#85D24E] uppercase tracking-wider mb-1">Focus Session</p>
+                    <p className="text-[11px] font-semibold text-[#4D5AE8] uppercase tracking-wider mb-1">Focus Session</p>
                     <h2 className="text-[20px] font-semibold text-[#1C1C1E] leading-tight">{task.title}</h2>
                 </div>
 
@@ -74,7 +74,7 @@ export function FocusSession() {
                         <circle
                             cx="50" cy="50" r="44"
                             fill="none"
-                            stroke="#85D24E"
+                            stroke="#4D5AE8"
                             strokeWidth="8"
                             strokeLinecap="round"
                             strokeDasharray={`${2 * Math.PI * 44}`}
@@ -100,7 +100,7 @@ export function FocusSession() {
                     </button>
                     <button
                         onClick={handleDone}
-                        className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl bg-[#85D24E] hover:bg-[#78C245] text-[14px] font-semibold text-[#1C1C1E] transition-colors shadow-md"
+                        className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl bg-[#4D5AE8] hover:bg-[#4048C9] text-[14px] font-semibold text-[#1C1C1E] transition-colors shadow-md"
                     >
                         <Check className="w-4 h-4" />
                         Done
@@ -108,7 +108,7 @@ export function FocusSession() {
                 </div>
 
                 {secondsLeft === 0 && (
-                    <p className="text-[13px] text-[#85D24E] font-medium animate-pulse">Time's up! Great work 🎉</p>
+                    <p className="text-[13px] text-[#4D5AE8] font-medium animate-pulse">Time's up! Great work 🎉</p>
                 )}
             </div>
         </div>
