@@ -653,6 +653,7 @@ impl<'a> Repository<'a> {
         new_start: &str,
         new_end: &str,
     ) -> Result<CalendarEvent> {
+        let tx = self.conn.unchecked_transaction()?;
         self.conn.execute("DELETE FROM events WHERE task_id = ?1", params![task_id])?;
         let id = uuid::Uuid::new_v4().to_string();
         self.conn.execute(
@@ -660,6 +661,7 @@ impl<'a> Repository<'a> {
              VALUES (?1, ?2, ?3, ?4, ?5, 'scheduled', ?6)",
             params![id, task_id, title, new_start, new_end, user_id],
         )?;
+        tx.commit()?;
         Ok(CalendarEvent {
             id,
             task_id: Some(task_id.to_string()),
@@ -682,6 +684,7 @@ impl<'a> Repository<'a> {
             params![task_id],
             |row| row.get(0),
         )?;
+        let tx = self.conn.unchecked_transaction()?;
         self.conn.execute(
             "UPDATE tasks SET status = 'completed' WHERE id = ?1",
             params![task_id],
@@ -702,6 +705,7 @@ impl<'a> Repository<'a> {
             self.add_task(&new_task)?;
             created.push(new_task);
         }
+        tx.commit()?;
         Ok(created)
     }
 }
