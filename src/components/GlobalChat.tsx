@@ -3,13 +3,28 @@ import { listen } from '@tauri-apps/api/event';
 import { Bot, User, Send, Loader2, Mic } from 'lucide-react';
 import { useStore } from '../store';
 import { SettingsDropdown } from './SettingsDropdown';
+import { InteractiveQuestion } from './InteractiveQuestion';
 import { useVoiceInput } from '../hooks/useVoiceInput';
+import { parseAIMessage } from '../utils/messageParser';
 import clsx from 'clsx';
 import { motion } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
 const PROSE = 'prose prose-sm max-w-none text-[#1C1C1E] prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-li:my-0.5 prose-a:text-[#85D24E]';
+
+function AIMessageContent({ content, onSelect }: { content: string; onSelect: (val: string) => void }) {
+    const parsed = parseAIMessage(content);
+    if (parsed.type === 'interactive_question') {
+        return (
+            <div className="flex flex-col gap-3">
+                {parsed.prefix && <div className={PROSE}><ReactMarkdown remarkPlugins={[remarkGfm]}>{parsed.prefix}</ReactMarkdown></div>}
+                <InteractiveQuestion question={parsed.question} options={parsed.options} onSelect={onSelect} />
+            </div>
+        );
+    }
+    return <div className={PROSE}><ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown></div>;
+}
 
 export function GlobalChat() {
     const [input, setInput] = useState('');
@@ -40,13 +55,13 @@ export function GlobalChat() {
         el.style.height = Math.min(el.scrollHeight, 160) + 'px';
     }, []);
 
-    const handleSend = async () => {
-        const msg = input.trim();
+    const handleSend = useCallback(async (text?: string) => {
+        const msg = (text ?? input).trim();
         if (!msg || isLoading) return;
         setInput('');
         if (textareaRef.current) textareaRef.current.style.height = 'auto';
         await sendGlobalMessage(msg);
-    };
+    }, [input, isLoading, sendGlobalMessage]);
 
     return (
         <div className="flex flex-col flex-1 h-full overflow-hidden">
@@ -96,7 +111,7 @@ export function GlobalChat() {
                                     : 'flex-1 bg-white border border-black/8 text-[#1C1C1E] rounded-tl-sm shadow-sm'
                             )}>
                                 {msg.role === 'assistant'
-                                    ? <div className={PROSE}><ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown></div>
+                                    ? <AIMessageContent content={msg.content} onSelect={handleSend} />
                                     : <p className="whitespace-pre-wrap">{msg.content}</p>
                                 }
                             </div>
@@ -137,7 +152,7 @@ export function GlobalChat() {
                             disabled={isLoading}
                         />
                         {input.trim() ? (
-                            <button onClick={handleSend} disabled={isLoading} className="shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-[#1C1C1E] hover:bg-black disabled:opacity-30 transition-all mb-0.5">
+                            <button onClick={() => handleSend()} disabled={isLoading} className="shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-[#1C1C1E] hover:bg-black disabled:opacity-30 transition-all mb-0.5">
                                 {isLoading ? <Loader2 className="w-4 h-4 text-white animate-spin" /> : <Send className="w-3.5 h-3.5 text-white ml-0.5" />}
                             </button>
                         ) : (
