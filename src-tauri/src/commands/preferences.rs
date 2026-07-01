@@ -30,6 +30,12 @@ pub fn save_user_preferences(
     buffer_minutes: Option<i32>,
     focus_start: Option<String>,
     focus_end: Option<String>,
+    notify_event_reminders: Option<bool>,
+    notify_deadlines: Option<bool>,
+    notify_missed_sessions: Option<bool>,
+    ai_response_style: Option<String>,
+    ai_custom_instruction: Option<String>,
+    voice_input_enabled: Option<bool>,
     conn: State<'_, Mutex<Connection>>,
     app_state: State<'_, AppState>,
 ) -> Result<UserPreferences, String> {
@@ -48,6 +54,12 @@ pub fn save_user_preferences(
         buffer_minutes: buffer_minutes.unwrap_or(10),
         focus_start,
         focus_end,
+        notify_event_reminders: notify_event_reminders.unwrap_or(true),
+        notify_deadlines: notify_deadlines.unwrap_or(true),
+        notify_missed_sessions: notify_missed_sessions.unwrap_or(true),
+        ai_response_style: ai_response_style.unwrap_or_else(|| "detailed".to_string()),
+        ai_custom_instruction,
+        voice_input_enabled: voice_input_enabled.unwrap_or(true),
     };
     let conn = conn.lock().map_err(|e| e.to_string())?;
     let repo = Repository::new(&conn);

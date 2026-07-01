@@ -142,6 +142,10 @@ pub fn check_missed_sessions(
 
     let conn_guard = conn.lock().map_err(|e| e.to_string())?;
     let repo = Repository::new(&conn_guard);
+    let prefs = repo.get_user_preferences(&user_id).map_err(|e| e.to_string())?.unwrap_or_default();
+    if !prefs.notify_missed_sessions {
+        return Ok(Vec::new());
+    }
     let rows = repo.get_missed_sessions(&user_id).map_err(|e| e.to_string())?;
 
     Ok(rows.into_iter().map(|(task, goal_title)| MissedSession {

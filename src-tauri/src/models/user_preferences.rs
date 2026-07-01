@@ -10,6 +10,12 @@ pub struct UserPreferences {
     pub buffer_minutes: i32,
     pub focus_start: Option<String>,
     pub focus_end: Option<String>,
+    pub notify_event_reminders: bool,
+    pub notify_deadlines: bool,
+    pub notify_missed_sessions: bool,
+    pub ai_response_style: String,
+    pub ai_custom_instruction: Option<String>,
+    pub voice_input_enabled: bool,
 }
 
 impl Default for UserPreferences {
@@ -23,6 +29,12 @@ impl Default for UserPreferences {
             buffer_minutes: 10,
             focus_start: None,
             focus_end: None,
+            notify_event_reminders: true,
+            notify_deadlines: true,
+            notify_missed_sessions: true,
+            ai_response_style: "detailed".to_string(),
+            ai_custom_instruction: None,
+            voice_input_enabled: true,
         }
     }
 }

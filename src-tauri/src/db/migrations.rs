@@ -82,6 +82,34 @@ pub fn run_migrations(conn: &Connection) -> Result<()> {
         "ALTER TABLE user_preferences ADD COLUMN focus_end TEXT",
         [],
     );
+    let _ = conn.execute(
+        "ALTER TABLE users ADD COLUMN avatar_base64 TEXT",
+        [],
+    );
+    let _ = conn.execute(
+        "ALTER TABLE user_preferences ADD COLUMN notify_event_reminders INTEGER NOT NULL DEFAULT 1",
+        [],
+    );
+    let _ = conn.execute(
+        "ALTER TABLE user_preferences ADD COLUMN notify_deadlines INTEGER NOT NULL DEFAULT 1",
+        [],
+    );
+    let _ = conn.execute(
+        "ALTER TABLE user_preferences ADD COLUMN notify_missed_sessions INTEGER NOT NULL DEFAULT 1",
+        [],
+    );
+    let _ = conn.execute(
+        "ALTER TABLE user_preferences ADD COLUMN ai_response_style TEXT NOT NULL DEFAULT 'detailed'",
+        [],
+    );
+    let _ = conn.execute(
+        "ALTER TABLE user_preferences ADD COLUMN ai_custom_instruction TEXT",
+        [],
+    );
+    let _ = conn.execute(
+        "ALTER TABLE user_preferences ADD COLUMN voice_input_enabled INTEGER NOT NULL DEFAULT 1",
+        [],
+    );
 
     Ok(())
 }

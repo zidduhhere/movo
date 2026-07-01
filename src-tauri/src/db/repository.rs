@@ -42,14 +42,15 @@ impl<'a> Repository<'a> {
             name: name.to_string(),
             password_hash: password_hash.to_string(),
             created_at,
+            avatar_base64: None,
         })
     }
 
     pub fn get_user_by_email(&self, email: &str) -> Result<Option<User>> {
         let mut stmt = self.conn.prepare(
-            "SELECT id, email, name, password_hash, created_at FROM users WHERE email = ?1"
+            "SELECT id, email, name, password_hash, created_at, avatar_base64 FROM users WHERE email = ?1"
         )?;
-        
+
         let user_iter = stmt.query_map(params![email], |row| {
             Ok(User {
                 id: row.get(0)?,
@@ -57,6 +58,7 @@ impl<'a> Repository<'a> {
                 name: row.get(2)?,
                 password_hash: row.get(3)?,
                 created_at: row.get(4)?,
+                avatar_base64: row.get(5)?,
             })
         })?;
 
@@ -65,6 +67,31 @@ impl<'a> Repository<'a> {
         }
 
         Ok(None)
+    }
+
+    pub fn update_user_profile(&self, user_id: &str, name: &str, avatar_base64: Option<&str>) -> Result<User> {
+        self.conn.execute(
+            "UPDATE users SET name = ?1, avatar_base64 = ?2 WHERE id = ?3",
+            params![name, avatar_base64, user_id],
+        )?;
+        let mut stmt = self.conn.prepare(
+            "SELECT id, email, name, password_hash, created_at, avatar_base64 FROM users WHERE id = ?1"
+        )?;
+        stmt.query_row(params![user_id], |row| {
+            Ok(User {
+                id: row.get(0)?,
+                email: row.get(1)?,
+                name: row.get(2)?,
+                password_hash: row.get(3)?,
+                created_at: row.get(4)?,
+                avatar_base64: row.get(5)?,
+            })
+        })
+    }
+
+    pub fn delete_user(&self, user_id: &str) -> Result<()> {
+        self.conn.execute("DELETE FROM users WHERE id = ?1", params![user_id])?;
+        Ok(())
     }
 
     pub fn create_goal(&self, user_id: &str, title: &str, description: Option<&str>, target_date: Option<&str>) -> Result<Goal> {
@@ -297,19 +324,28 @@ impl<'a> Repository<'a> {
     pub fn get_user_preferences(&self, user_id: &str) -> Result<Option<UserPreferences>> {
         let mut stmt = self.conn.prepare(
             "SELECT user_id, work_start, work_end, focus_block_mins, days_off,
-                    COALESCE(buffer_minutes, 10), focus_start, focus_end
+                    COALESCE(buffer_minutes, 10), focus_start, focus_end,
+                    COALESCE(notify_event_reminders, 1), COALESCE(notify_deadlines, 1),
+                    COALESCE(notify_missed_sessions, 1), COALESCE(ai_response_style, 'detailed'),
+                    ai_custom_instruction, COALESCE(voice_input_enabled, 1)
              FROM user_preferences WHERE user_id = ?1"
         )?;
         let mut rows = stmt.query_map([user_id], |row| {
             Ok(UserPreferences {
-                user_id:          row.get(0)?,
-                work_start:       row.get(1)?,
-                work_end:         row.get(2)?,
-                focus_block_mins: row.get(3)?,
-                days_off:         row.get(4)?,
-                buffer_minutes:   row.get(5)?,
-                focus_start:      row.get(6)?,
-                focus_end:        row.get(7)?,
+                user_id:                row.get(0)?,
+                work_start:             row.get(1)?,
+                work_end:               row.get(2)?,
+                focus_block_mins:       row.get(3)?,
+                days_off:               row.get(4)?,
+                buffer_minutes:         row.get(5)?,
+                focus_start:            row.get(6)?,
+                focus_end:              row.get(7)?,
+                notify_event_reminders: row.get(8)?,
+                notify_deadlines:       row.get(9)?,
+                notify_missed_sessions: row.get(10)?,
+                ai_response_style:      row.get(11)?,
+                ai_custom_instruction:  row.get(12)?,
+                voice_input_enabled:    row.get(13)?,
             })
         })?;
         if let Some(row) = rows.next() { Ok(Some(row?)) } else { Ok(None) }
@@ -318,20 +354,31 @@ impl<'a> Repository<'a> {
     pub fn save_user_preferences(&self, prefs: &UserPreferences) -> Result<()> {
         self.conn.execute(
             "INSERT INTO user_preferences
-               (user_id, work_start, work_end, focus_block_mins, days_off, buffer_minutes, focus_start, focus_end)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)
+               (user_id, work_start, work_end, focus_block_mins, days_off, buffer_minutes,
+                focus_start, focus_end, notify_event_reminders, notify_deadlines,
+                notify_missed_sessions, ai_response_style, ai_custom_instruction, voice_input_enabled)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)
              ON CONFLICT(user_id) DO UPDATE SET
-               work_start       = excluded.work_start,
-               work_end         = excluded.work_end,
-               focus_block_mins = excluded.focus_block_mins,
-               days_off         = excluded.days_off,
-               buffer_minutes   = excluded.buffer_minutes,
-               focus_start      = excluded.focus_start,
-               focus_end        = excluded.focus_end",
+               work_start              = excluded.work_start,
+               work_end                = excluded.work_end,
+               focus_block_mins        = excluded.focus_block_mins,
+               days_off                = excluded.days_off,
+               buffer_minutes          = excluded.buffer_minutes,
+               focus_start             = excluded.focus_start,
+               focus_end               = excluded.focus_end,
+               notify_event_reminders  = excluded.notify_event_reminders,
+               notify_deadlines        = excluded.notify_deadlines,
+               notify_missed_sessions  = excluded.notify_missed_sessions,
+               ai_response_style       = excluded.ai_response_style,
+               ai_custom_instruction   = excluded.ai_custom_instruction,
+               voice_input_enabled     = excluded.voice_input_enabled",
             rusqlite::params![
                 prefs.user_id, prefs.work_start, prefs.work_end,
                 prefs.focus_block_mins, prefs.days_off,
                 prefs.buffer_minutes, prefs.focus_start, prefs.focus_end,
+                prefs.notify_event_reminders, prefs.notify_deadlines,
+                prefs.notify_missed_sessions, prefs.ai_response_style,
+                prefs.ai_custom_instruction, prefs.voice_input_enabled,
             ],
         )?;
         Ok(())
@@ -738,12 +785,70 @@ mod tests {
             buffer_minutes: 15,
             focus_start: Some("09:00".to_string()),
             focus_end: Some("11:00".to_string()),
+            ..UserPreferences::default()
         };
         repo.save_user_preferences(&prefs).unwrap();
         let loaded = repo.get_user_preferences("u1").unwrap().unwrap();
         assert_eq!(loaded.buffer_minutes, 15);
         assert_eq!(loaded.focus_start, Some("09:00".to_string()));
         assert_eq!(loaded.focus_end, Some("11:00".to_string()));
+    }
+
+    #[test]
+    fn user_prefs_roundtrip_settings_fields() {
+        let conn = setup();
+        let repo = Repository::new(&conn);
+        conn.execute(
+            "INSERT INTO users (id, email, name, password_hash, created_at) VALUES ('u1','a@b.com','A','x','2026-01-01')",
+            [],
+        ).unwrap();
+        let mut prefs = UserPreferences::default();
+        prefs.user_id = "u1".to_string();
+        prefs.notify_event_reminders = false;
+        prefs.notify_deadlines = false;
+        prefs.notify_missed_sessions = true;
+        prefs.ai_response_style = "concise".to_string();
+        prefs.ai_custom_instruction = Some("Always suggest a 5-min warmup task.".to_string());
+        prefs.voice_input_enabled = false;
+        repo.save_user_preferences(&prefs).unwrap();
+
+        let loaded = repo.get_user_preferences("u1").unwrap().unwrap();
+        assert_eq!(loaded.notify_event_reminders, false);
+        assert_eq!(loaded.notify_deadlines, false);
+        assert_eq!(loaded.notify_missed_sessions, true);
+        assert_eq!(loaded.ai_response_style, "concise");
+        assert_eq!(loaded.ai_custom_instruction, Some("Always suggest a 5-min warmup task.".to_string()));
+        assert_eq!(loaded.voice_input_enabled, false);
+    }
+
+    #[test]
+    fn update_user_profile_and_delete_user() {
+        let conn = setup();
+        let repo = Repository::new(&conn);
+        conn.execute(
+            "INSERT INTO users (id, email, name, password_hash, created_at) VALUES ('u1','a@b.com','Old Name','x','2026-01-01')",
+            [],
+        ).unwrap();
+
+        let updated = repo.update_user_profile("u1", "New Name", Some("data:image/png;base64,abc123")).unwrap();
+        assert_eq!(updated.name, "New Name");
+        assert_eq!(updated.avatar_base64, Some("data:image/png;base64,abc123".to_string()));
+
+        conn.execute("PRAGMA foreign_keys = ON", []).unwrap();
+        conn.execute(
+            "INSERT INTO goals (id,user_id,title,status,created_at) VALUES ('g1','u1','Goal','active','2026-01-01')",
+            [],
+        ).unwrap();
+
+        repo.delete_user("u1").unwrap();
+
+        let gone = repo.get_user_by_email("a@b.com").unwrap();
+        assert!(gone.is_none());
+
+        let goal_count: i64 = conn.query_row(
+            "SELECT COUNT(*) FROM goals WHERE id = 'g1'", [], |r| r.get(0)
+        ).unwrap();
+        assert_eq!(goal_count, 0);
     }
 
     #[test]

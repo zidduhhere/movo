@@ -9,4 +9,5 @@ pub struct User {
     #[serde(skip_serializing)]
     pub password_hash: String,
     pub created_at: String,
+    pub avatar_base64: Option<String>,
 }

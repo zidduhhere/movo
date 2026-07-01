@@ -3,7 +3,7 @@ use std::env;
 use std::future::Future;
 use reqwest::Client;
 use serde_json::{json, Value};
-use crate::models::ChatMessage;
+use crate::models::{ChatMessage, UserPreferences};
 
 pub struct OpenAiProvider {
     api_key: String,
@@ -78,6 +78,21 @@ fn extract_tool_calls(resp: &Value) -> Vec<ToolCall> {
     }
 
     tool_calls
+}
+
+/// Builds a system-prompt suffix from the user's response-style and custom-instruction
+/// preferences. Returns an empty string when both are at their defaults.
+pub fn preference_prompt_suffix(prefs: &UserPreferences) -> String {
+    let mut suffix = String::new();
+    if prefs.ai_response_style == "concise" {
+        suffix.push_str("\n\nRESPONSE STYLE: Keep replies short and to the point — 1-3 sentences unless a list or table is required.");
+    }
+    if let Some(instruction) = prefs.ai_custom_instruction.as_deref() {
+        if !instruction.trim().is_empty() {
+            suffix.push_str(&format!("\n\nUSER CUSTOM INSTRUCTION: {}", instruction.trim()));
+        }
+    }
+    suffix
 }
 
 impl OpenAiProvider {
@@ -367,4 +382,32 @@ pub fn task_chat_tools() -> Value {
             }
         }
     ])
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn preference_prompt_suffix_concise_style() {
+        let mut prefs = UserPreferences::default();
+        prefs.ai_response_style = "concise".to_string();
+        let suffix = preference_prompt_suffix(&prefs);
+        assert!(suffix.contains("short"), "expected concise instruction, got: {suffix}");
+    }
+
+    #[test]
+    fn preference_prompt_suffix_detailed_style_is_empty_style_line() {
+        let prefs = UserPreferences::default();
+        let suffix = preference_prompt_suffix(&prefs);
+        assert!(!suffix.to_lowercase().contains("keep replies short"));
+    }
+
+    #[test]
+    fn preference_prompt_suffix_includes_custom_instruction() {
+        let mut prefs = UserPreferences::default();
+        prefs.ai_custom_instruction = Some("Always mention deep work blocks.".to_string());
+        let suffix = preference_prompt_suffix(&prefs);
+        assert!(suffix.contains("Always mention deep work blocks."));
+    }
 }

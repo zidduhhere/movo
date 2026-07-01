@@ -92,6 +92,7 @@ pub async fn task_chat(
         current_event = current_event_str,
         calendar = calendar_str,
     );
+    let system_prompt = format!("{}{}", system_prompt, crate::ai::openai::preference_prompt_suffix(&prefs));
 
     // Build message history for the AI
     let mut messages: Vec<ChatMessage> = history.into_iter().enumerate().map(|(i, h)| {

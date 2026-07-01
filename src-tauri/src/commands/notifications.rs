@@ -19,88 +19,96 @@ pub async fn check_and_send_notifications(
             .clone()
     }.ok_or("Not logged in")?;
 
-    let now = Utc::now();
-    let in_5_min = now + chrono::Duration::minutes(5);
-
-    // Fetch events starting in the next 5 minutes
-    let events = {
+    let prefs = {
         let conn_guard = conn.lock().map_err(|e| e.to_string())?;
         let repo = Repository::new(&conn_guard);
-        repo.get_events_in_range(&user_id, &now.to_rfc3339(), &in_5_min.to_rfc3339())
-            .map_err(|e| e.to_string())?
+        repo.get_user_preferences(&user_id).map_err(|e| e.to_string())?.unwrap_or_default()
     };
 
-    // Skip events already notified this session
-    let to_notify: Vec<_> = {
-        let notified = app_state.notified_event_ids.lock().map_err(|e| e.to_string())?;
-        events.into_iter().filter(|e| !notified.contains(&e.id)).collect()
-    };
-
-    if to_notify.is_empty() {
-        return Ok(0);
-    }
-
-    let ai = OpenAiProvider::new()?;
+    let now = Utc::now();
+    let in_5_min = now + chrono::Duration::minutes(5);
     let mut sent = 0;
 
-    for event in to_notify {
-        let user_prompt = format!(
-            "Write a brief, warm, motivating push notification (max 20 words) for this upcoming calendar event.\n\
-             Event: '{}'\n\
-             Starting in about 5 minutes.\n\
-             Return ONLY the notification body text, nothing else.",
-            event.title
-        );
+    // Fetch events starting in the next 5 minutes
+    if prefs.notify_event_reminders {
+        let events = {
+            let conn_guard = conn.lock().map_err(|e| e.to_string())?;
+            let repo = Repository::new(&conn_guard);
+            repo.get_events_in_range(&user_id, &now.to_rfc3339(), &in_5_min.to_rfc3339())
+                .map_err(|e| e.to_string())?
+        };
 
-        let body = ai
-            .simple_completion(
-                "You write concise push notifications. Return only the notification body, no quotes, no labels.",
-                &user_prompt,
-            )
-            .await
-            .unwrap_or_else(|_| format!("'{}' starts in 5 minutes — get ready!", event.title));
+        // Skip events already notified this session
+        let to_notify: Vec<_> = {
+            let notified = app_state.notified_event_ids.lock().map_err(|e| e.to_string())?;
+            events.into_iter().filter(|e| !notified.contains(&e.id)).collect()
+        };
 
-        let _ = app_handle
-            .notification()
-            .builder()
-            .title("Movo")
-            .body(&body)
-            .show();
+        if !to_notify.is_empty() {
+            let ai = OpenAiProvider::new()?;
 
-        app_state
-            .notified_event_ids
-            .lock()
-            .map_err(|e| e.to_string())?
-            .insert(event.id);
+            for event in to_notify {
+                let user_prompt = format!(
+                    "Write a brief, warm, motivating push notification (max 20 words) for this upcoming calendar event.\n\
+                     Event: '{}'\n\
+                     Starting in about 5 minutes.\n\
+                     Return ONLY the notification body text, nothing else.",
+                    event.title
+                );
 
-        sent += 1;
+                let body = ai
+                    .simple_completion(
+                        "You write concise push notifications. Return only the notification body, no quotes, no labels.",
+                        &user_prompt,
+                    )
+                    .await
+                    .unwrap_or_else(|_| format!("'{}' starts in 5 minutes — get ready!", event.title));
+
+                let _ = app_handle
+                    .notification()
+                    .builder()
+                    .title("Movo")
+                    .body(&body)
+                    .show();
+
+                app_state
+                    .notified_event_ids
+                    .lock()
+                    .map_err(|e| e.to_string())?
+                    .insert(event.id);
+
+                sent += 1;
+            }
+        }
     }
 
     // ── Deadline alerts: tasks due within the next 24 hours ───────────────────
-    let deadline_tasks = {
-        let conn_guard = conn.lock().map_err(|e| e.to_string())?;
-        let repo = Repository::new(&conn_guard);
-        repo.get_tasks_with_upcoming_deadlines(&user_id)
-            .map_err(|e| e.to_string())?
-    };
+    if prefs.notify_deadlines {
+        let deadline_tasks = {
+            let conn_guard = conn.lock().map_err(|e| e.to_string())?;
+            let repo = Repository::new(&conn_guard);
+            repo.get_tasks_with_upcoming_deadlines(&user_id)
+                .map_err(|e| e.to_string())?
+        };
 
-    let notified_deadlines = {
-        app_state.notified_deadline_task_ids
-            .lock().map_err(|e| e.to_string())?.clone()
-    };
+        let notified_deadlines = {
+            app_state.notified_deadline_task_ids
+                .lock().map_err(|e| e.to_string())?.clone()
+        };
 
-    for task in deadline_tasks {
-        if notified_deadlines.contains(&task.id) { continue; }
+        for task in deadline_tasks {
+            if notified_deadlines.contains(&task.id) { continue; }
 
-        let body = format!(
-            "Deadline approaching for '{}'. Movo recommends starting soon.",
-            task.title
-        );
-        let _ = app_handle.notification().builder().title("Movo").body(&body).show();
-        app_state.notified_deadline_task_ids
-            .lock().map_err(|e| e.to_string())?
-            .insert(task.id);
-        sent += 1;
+            let body = format!(
+                "Deadline approaching for '{}'. Movo recommends starting soon.",
+                task.title
+            );
+            let _ = app_handle.notification().builder().title("Movo").body(&body).show();
+            app_state.notified_deadline_task_ids
+                .lock().map_err(|e| e.to_string())?
+                .insert(task.id);
+            sent += 1;
+        }
     }
 
     // ── Daily summary: once per calendar day ──────────────────────────────────

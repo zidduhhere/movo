@@ -116,6 +116,7 @@ pub async fn global_chat(
         days_off = prefs.days_off,
         calendar = calendar_str,
     );
+    let system_prompt = format!("{}{}", system_prompt, crate::ai::openai::preference_prompt_suffix(&prefs));
 
     let ai = OpenAiProvider::new()?;
     let (ai_text, tool_calls) = ai.chat_with_tools(&system_prompt, messages, global_chat_tools()).await?;
