@@ -60,8 +60,14 @@ pub fn run() {
                 .menu(&menu)
                 .show_menu_on_left_click(false)
                 .on_menu_event(|app, event| match event.id.as_ref() {
-                    "open_movo" | "voice_input" => {
+                    "open_movo" => {
                         if let Some(win) = app.get_webview_window("main") {
+                            let _ = win.show();
+                            let _ = win.set_focus();
+                        }
+                    }
+                    "voice_input" => {
+                        if let Some(win) = app.get_webview_window("voice_popup") {
                             let _ = win.show();
                             let _ = win.set_focus();
                         }
