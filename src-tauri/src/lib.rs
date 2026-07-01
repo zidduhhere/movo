@@ -90,6 +90,10 @@ pub fn run() {
                                     let scale = monitor.scale_factor();
                                     let screen_w = monitor.size().width as f64 / scale;
                                     let screen_h = monitor.size().height as f64 / scale;
+<<<<<<< HEAD
+=======
+                                    
+>>>>>>> 28cb24e (feat(tray): rewrite tray popup as inline chat panel)
                                     let width = 420.0;
                                     let height = 420.0;
                                     let _ = popup.set_size(tauri::Size::Logical(tauri::LogicalSize { width, height }));

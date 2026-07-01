@@ -37,7 +37,11 @@
       {
         "label": "tray_popup",
         "title": "Movo Tasks",
+<<<<<<< HEAD
         "width": 420,
+=======
+        "width": 1000,
+>>>>>>> 28cb24e (feat(tray): rewrite tray popup as inline chat panel)
         "height": 420,
         "visible": false,
         "decorations": false,
