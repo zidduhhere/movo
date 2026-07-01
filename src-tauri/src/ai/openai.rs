@@ -97,7 +97,7 @@ impl OpenAiProvider {
         let model_name = env::var("OPENAI_MODEL")
             .unwrap_or_else(|_| {
                 option_env!("OPENAI_MODEL")
-                    .unwrap_or("openai.gpt-oss-120b-1:0")
+                    .unwrap_or("gpt-4o")
                     .to_string()
             });
         Ok(Self {
