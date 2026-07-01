@@ -10,7 +10,7 @@
 
 You can download the latest macOS release of Movo below:
 
-📥 **[Download Movo for macOS (.dmg) - Google Drive](https://drive.google.com/file/d/1dPM8Q1DAL6CE9A48LteFYy4E93rmaVQY/view?usp=sharing)**
+📥 **[Download Movo for macOS (.dmg) - Google Drive](https://drive.google.com/drive/folders/1M2bVVDOB1YOsJdh5SL9mehDh31LZ8ozf?usp=sharing)**
 
 > **Note:** Since this app is an unsigned developer build, macOS might show a warning when you open it. To bypass this, go to **System Settings > Privacy & Security** and click **Open Anyway**.
 
