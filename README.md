@@ -69,9 +69,17 @@ If you want to build Movo from source or contribute to the project, follow these
    ```
 
 3. **Set up Environment Variables:**
-   Create a `.env` file in the root directory and add your AI provider API keys (e.g., OpenAI):
+   Create a `.env` file inside the `src-tauri/` directory (i.e., `src-tauri/.env`) and add your AI provider configuration. The following variables are supported:
+   
    ```env
+   # Required: Your OpenAI (or compatible provider) API key
    OPENAI_API_KEY=your_api_key_here
+   
+   # Optional: Override the base URL if you're using a custom endpoint or alternative provider (e.g., AWS Bedrock, local LLM)
+   OPENAI_BASE_URL=https://api.openai.com/v1
+   
+   # Optional: Specify the model name to use (defaults to gpt-4o)
+   OPENAI_MODEL=gpt-4o
    ```
 
 4. **Run the development server:**
