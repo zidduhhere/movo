@@ -10,6 +10,15 @@ const DEFAULT_PREFS = {
     work_end: '18:00',
     focus_block_mins: 60,
     days_off: 'Saturday,Sunday',
+    buffer_minutes: 10,
+    focus_start: undefined,
+    focus_end: undefined,
+    notify_event_reminders: true,
+    notify_deadlines: true,
+    notify_missed_sessions: true,
+    ai_response_style: 'detailed' as const,
+    ai_custom_instruction: undefined,
+    voice_input_enabled: true,
 };
 
 export function Onboarding() {
@@ -28,6 +37,7 @@ export function Onboarding() {
 
     async function handleFinish() {
         await savePreferences({
+            ...DEFAULT_PREFS,
             work_start: workStart,
             work_end: workEnd,
             focus_block_mins: focusBlock,

@@ -34,7 +34,7 @@ export function TrayPopup() {
     const inputRef = useRef<HTMLInputElement>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
-    const { globalMessages, sendGlobalMessage, isLoading, fetchGlobalMessages } = useStore();
+    const { globalMessages, sendGlobalMessage, isLoading, fetchGlobalMessages, preferences } = useStore();
 
     const { transcript, setTranscript, isListening, micError, toggleListening, stopListening } = useVoiceInput();
 
@@ -160,6 +160,7 @@ export function TrayPopup() {
                 />
 
                 {/* Mic button */}
+                {preferences?.voice_input_enabled !== false && (
                 <button
                     type="button"
                     onClick={toggleListening}
@@ -175,6 +176,7 @@ export function TrayPopup() {
                 >
                     {micError ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
                 </button>
+                )}
 
                 {/* Send button */}
                 <button

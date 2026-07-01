@@ -35,6 +35,7 @@ export interface User {
     email: string;
     name: string;
     created_at: string;
+    avatar_base64?: string;
 }
 
 export interface UserPreferences {
@@ -43,6 +44,15 @@ export interface UserPreferences {
     work_end: string;
     focus_block_mins: number;
     days_off: string;
+    buffer_minutes: number;
+    focus_start?: string;
+    focus_end?: string;
+    notify_event_reminders: boolean;
+    notify_deadlines: boolean;
+    notify_missed_sessions: boolean;
+    ai_response_style: 'concise' | 'detailed';
+    ai_custom_instruction?: string;
+    voice_input_enabled: boolean;
 }
 
 export interface CalendarEvent {
@@ -135,7 +145,9 @@ interface AppState {
 
     login: (email: string, password: string) => Promise<void>;
     register: (email: string, name: string, password: string) => Promise<void>;
-    logout: () => void;
+    logout: () => Promise<void>;
+    updateProfile: (name: string, avatarBase64?: string) => Promise<void>;
+    deleteAccount: () => Promise<void>;
     fetchGoals: () => Promise<void>;
     fetchTasksForGoal: (goalId: string) => Promise<void>;
     fetchAllTasks: () => Promise<void>;
@@ -224,7 +236,20 @@ export const useStore = create<AppState>((set, _get) => ({
         }
     },
 
-    logout: () => {
+    logout: async () => {
+        try {
+            await invoke('logout_session');
+        } catch { /* best effort */ }
+        set({ user: null, goals: [], tasks: [], activeGoalId: null, preferences: null, preferencesLoaded: false, events: [] });
+    },
+
+    updateProfile: async (name, avatarBase64) => {
+        const updated = await invoke<User>('update_user_profile', { name, avatarBase64 });
+        set({ user: updated });
+    },
+
+    deleteAccount: async () => {
+        await invoke('delete_account');
         set({ user: null, goals: [], tasks: [], activeGoalId: null, preferences: null, preferencesLoaded: false, events: [] });
     },
 
@@ -370,6 +395,15 @@ export const useStore = create<AppState>((set, _get) => ({
             workEnd: prefs.work_end,
             focusBlockMins: prefs.focus_block_mins,
             daysOff: prefs.days_off,
+            bufferMinutes: prefs.buffer_minutes,
+            focusStart: prefs.focus_start,
+            focusEnd: prefs.focus_end,
+            notifyEventReminders: prefs.notify_event_reminders,
+            notifyDeadlines: prefs.notify_deadlines,
+            notifyMissedSessions: prefs.notify_missed_sessions,
+            aiResponseStyle: prefs.ai_response_style,
+            aiCustomInstruction: prefs.ai_custom_instruction,
+            voiceInputEnabled: prefs.voice_input_enabled,
         });
         await useStore.getState().fetchPreferences();
     },

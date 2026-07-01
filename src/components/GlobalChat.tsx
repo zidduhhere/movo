@@ -33,7 +33,7 @@ export function GlobalChat() {
     const hasMounted = useRef(false);
 
     const { globalMessages, sendGlobalMessage, isLoading, isSidebarOpen, toggleSidebar, fetchGoals,
-            pendingTrayCapture, setPendingTrayCapture } = useStore();
+            pendingTrayCapture, setPendingTrayCapture, preferences } = useStore();
 
     const { isListening, toggleListening } = useVoiceInput({
         onTranscript: (text) => setInput(text),
@@ -174,7 +174,7 @@ export function GlobalChat() {
                             <button onClick={() => handleSend()} disabled={isLoading} className="shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-[#1C1C1E] hover:bg-black disabled:opacity-30 transition-all mb-0.5">
                                 {isLoading ? <Loader2 className="w-4 h-4 text-white animate-spin" /> : <Send className="w-3.5 h-3.5 text-white ml-0.5" />}
                             </button>
-                        ) : (
+                        ) : preferences?.voice_input_enabled !== false ? (
                             <button
                                 type="button"
                                 onClick={toggleListening}
@@ -187,7 +187,7 @@ export function GlobalChat() {
                             >
                                 <Mic className="w-5 h-5" />
                             </button>
-                        )}
+                        ) : null}
                     </motion.div>
                     <p className="text-center text-[10px] text-black/25 mt-2">Enter to send · Shift+Enter for new line</p>
                 </div>
