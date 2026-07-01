@@ -78,8 +78,8 @@ If you want to build Movo from source or contribute to the project, follow these
    # Optional: Override the base URL if you're using a custom endpoint or alternative provider (e.g., AWS Bedrock, local LLM)
    OPENAI_BASE_URL=https://api.openai.com/v1
    
-   # Optional: Specify the model name to use (defaults to gpt-4o)
-   OPENAI_MODEL=gpt-4o
+   # Optional: Specify the model name to use (defaults to openai.gpt-oss-120b-1:0)
+   OPENAI_MODEL=openai.gpt-oss-120b-1:0
    ```
 
 4. **Run the development server:**
